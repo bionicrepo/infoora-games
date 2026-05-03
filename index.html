@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Hub - Cyberpunk Edition</title>
+    <style>
+        /* CSS RESET & STYLES */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 1), 0 0 30px rgba(0, 229, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* FUTURISTIC UI OVERLAYS */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(5, 5, 15, 0.4); 
+            backdrop-filter: blur(2px);
+            z-index: 10;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 {
+            font-size: 4rem; 
+            margin-bottom: 50px; 
+            text-transform: uppercase; 
+            letter-spacing: 8px;
+            color: #fff;
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #00e5ff, 0 0 40px #00e5ff, 0 0 80px #00e5ff;
+        }
+
+        h2 { font-size: 2.5rem; margin-bottom: 20px; color: #ff0055; text-shadow: 0 0 15px rgba(255, 0, 85, 0.8); }
+        p { font-size: 1.5rem; margin-bottom: 30px; text-shadow: 1px 1px 5px #000; }
+
+        .btn-group { display: flex; flex-direction: column; gap: 20px; width: 350px;}
+        
+        button {
+            background: rgba(0, 229, 255, 0.05);
+            color: #fff; 
+            border: 1px solid rgba(0, 229, 255, 0.5);
+            padding: 15px; 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            cursor: pointer;
+            border-radius: 4px; 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: inset 0 0 10px rgba(0,229,255,0.1), 0 0 10px rgba(0,229,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+            transform: skewX(-25deg); transition: 0.5s;
+        }
+
+        button:hover { 
+            background: rgba(0, 229, 255, 0.2); 
+            color: #fff; 
+            transform: scale(1.05); 
+            box-shadow: inset 0 0 20px rgba(0,229,255,0.4), 0 0 20px rgba(0,229,255,0.6); 
+            border-color: #00e5ff;
+        }
+
+        button:hover::before { left: 200%; }
+
+        button.danger { border-color: rgba(255, 0, 85, 0.5); box-shadow: inset 0 0 10px rgba(255,0,85,0.1), 0 0 10px rgba(255,0,85,0.1); }
+        button.danger:hover { background: rgba(255, 0, 85, 0.2); border-color: #ff0055; box-shadow: inset 0 0 20px rgba(255,0,85,0.4), 0 0 20px rgba(255,0,85,0.6); }
+
+        /* HUD */
+        #hud { position: absolute; top: 15px; left: 20px; z-index: 5; font-size: 1.5rem; font-weight: bold; text-shadow: 2px 2px 4px #000; }
+        #hud-controls { position: absolute; top: 15px; right: 20px; z-index: 5; font-size: 1.2rem; color: #fff; text-shadow: 2px 2px 4px #000; }
+        .lvl-text { color: #f1c40f; margin-left: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="hud" class="hidden">
+            Pont: <span id="scoreVal">0</span> 
+            <span id="levelDisplay" class="hidden lvl-text">Szint: <span id="levelVal">1</span>/5</span>
+        </div>
+        <div id="hud-controls" class="hidden">ESC: Menü</div>
+
+        <!-- MENU -->
+        <div id="mainMenu" class="overlay">
+            <h1>Arcade Hub</h1>
+            <div class="btn-group">
+                <button onclick="app.startGame('moto')">Motorverseny (2.5D)</button>
+                <button onclick="app.startGame('car')">Autóverseny (3D Retro)</button>
+                <button onclick="app.startGame('dash')">Geometry Dash (5 Szint)</button>
+            </div>
+        </div>
+
+        <!-- GAME OVER -->
+        <div id="gameOver" class="overlay hidden">
+            <h2>Rendszerhiba (Game Over)</h2>
+            <p>Elért pontszám: <span id="finalScoreVal">0</span></p>
+            <div class="btn-group">
+                <button onclick="app.restartGame()">Rendszer Újraindítása</button>
+                <button class="danger" onclick="app.showMenu()">Főmenü</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- INPUT HANDLER ---
+        class InputHandler {
+            constructor() {
+                this.keys = {};
+                window.addEventListener('keydown', e => this.keys[e.code] = true);
+                window.addEventListener('keyup', e => this.keys[e.code] = false);
+            }
+            isDown(code) { return this.keys[code] === true; }
+            consume(code) { if(this.keys[code]) { this.keys[code] = false; return true; } return false; }
+        }
+
+        // --- DRAWING HELPERS ---
+        function drawMotoSide(ctx, x, y, scale, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            ctx.fillStyle = '#111';
+            ctx.beginPath(); ctx.arc(-25, 10, 15, 0, Math.PI*2); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(35, 10, 15, 0, Math.PI*2); ctx.fill();  
+            ctx.fillStyle = '#ccc';
+            ctx.beginPath(); ctx.arc(-25, 10, 8, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(35, 10, 8, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(-15, -5); ctx.lineTo(15, -10); ctx.lineTo(25, 10); ctx.lineTo(-20, 10);
+            ctx.fill();
+            ctx.fillStyle = '#666';
+            ctx.fillRect(15, -25, 4, 20); 
+            ctx.fillRect(-35, 5, 20, 4); 
+            ctx.fillStyle = '#2c3e50'; 
+            ctx.beginPath(); ctx.arc(0, -20, 12, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillStyle = '#e74c3c'; 
+            ctx.beginPath(); ctx.arc(5, -35, 10, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawCarRear(ctx, x, y, scale, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            let w = 80, h = 40, hw = w/2;
+            ctx.fillStyle = '#111';
+            ctx.fillRect(-hw - 5, -5, 15, 15);
+            ctx.fillRect(hw - 10, -5, 15, 15);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(-hw, -25, w, 25, 5);
+            ctx.fill();
+            ctx.fillStyle = '#333'; 
+            ctx.beginPath();
+            ctx.moveTo(-hw + 10, -25); ctx.lineTo(hw - 10, -25);
+            ctx.lineTo(hw - 20, -45); ctx.lineTo(-hw + 20, -45);
+            ctx.fill();
+            ctx.fillStyle = '#87CEEB';
+            ctx.beginPath();
+            ctx.moveTo(-hw + 12, -27); ctx.lineTo(hw - 12, -27);
+            ctx.lineTo(hw - 18, -42); ctx.lineTo(-hw + 18, -42);
+            ctx.fill();
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(-hw + 5, -15, 15, 8);
+            ctx.fillRect(hw - 20, -15, 15, 8);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-15, -12, 30, 6);
+            ctx.restore();
+        }
+
+        // --- CYBERPUNK MENU BACKGROUND ---
+        class MenuBackground {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.time = 0;
+                
+                this.buildings = [];
+                let x = 0;
+                while(x < 1200) {
+                    let w = 40 + Math.random() * 80;
+                    let h = 100 + Math.random() * 250;
+                    let windows = [];
+                    for(let wy = 10; wy < h - 20; wy += 20) {
+                        for(let wx = 10; wx < w - 15; wx += 15) {
+                            if(Math.random() > 0.6) windows.push({x: wx, y: wy});
+                        }
+                    }
+                    this.buildings.push({ x: x, w: w, h: h, windows: windows, neon: Math.random() > 0.5 ? '#00e5ff' : '#ff0055' });
+                    x += w + 5 + Math.random() * 20;
+                }
+            }
+            update(dt) { this.time += dt; }
+            draw() {
+                let w = this.canvas.width, h = this.canvas.height, horizon = h / 2 + 50;
+                let skyGrad = this.ctx.createLinearGradient(0, 0, 0, horizon);
+                skyGrad.addColorStop(0, '#020014'); skyGrad.addColorStop(1, '#2d0036'); 
+                this.ctx.fillStyle = skyGrad; this.ctx.fillRect(0, 0, w, horizon);
+
+                this.ctx.save();
+                this.ctx.translate(w/2, horizon - 80);
+                let sunGrad = this.ctx.createLinearGradient(0, -80, 0, 80);
+                sunGrad.addColorStop(0, '#ff007f'); sunGrad.addColorStop(1, '#ffc000');
+                this.ctx.fillStyle = sunGrad;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 100, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.fillStyle = '#2d0036'; 
+                for(let i=0; i<6; i++) this.ctx.fillRect(-100, 20 + i*15, 200, 2 + i*1.5);
+                this.ctx.restore();
+
+                let bgOffset = (this.time * 20) % 1200;
+                this.ctx.save();
+                for(let loop = 0; loop < 2; loop++) {
+                    this.ctx.translate(loop === 1 ? 1200 : -bgOffset, 0);
+                    for(let b of this.buildings) {
+                        let bx = b.x, by = horizon - b.h;
+                        this.ctx.fillStyle = '#050510'; this.ctx.fillRect(bx, by, b.w, b.h);
+                        this.ctx.strokeStyle = b.neon; this.ctx.lineWidth = 1; this.ctx.strokeRect(bx, by, b.w, b.h);
+                        this.ctx.fillStyle = b.neon;
+                        for(let win of b.windows) {
+                            this.ctx.globalAlpha = 0.5 + Math.sin(this.time * 5 + win.x) * 0.5;
+                            this.ctx.fillRect(bx + win.x, by + win.y, 6, 10);
+                        }
+                        this.ctx.globalAlpha = 1.0;
+                    }
+                }
+                this.ctx.restore();
+
+                this.ctx.fillStyle = '#050014'; this.ctx.fillRect(0, horizon, w, h - horizon);
+                this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 1.5;
+                
+                for(let i=0; i<20; i++) {
+                    let z = ((i*20) - (this.time * 50) % 20); 
+                    if (z < 1) z = 1; 
+                    let y = horizon + (2000 / z);
+                    if (y > horizon && y < h) {
+                        this.ctx.beginPath(); this.ctx.moveTo(0, y); this.ctx.lineTo(w, y);
+                        this.ctx.globalAlpha = Math.max(0, 1 - (z/400)); this.ctx.stroke();
+                    }
+                }
+                this.ctx.globalAlpha = 0.6;
+                let vpX = w/2, vpY = horizon;
+                for(let i=-20; i<20; i++) {
+                    this.ctx.beginPath(); this.ctx.moveTo(vpX, vpY); this.ctx.lineTo(vpX + (i * 100), h); this.ctx.stroke();
+                }
+                this.ctx.globalAlpha = 1.0;
+                this.ctx.fillStyle = '#ff0055'; this.ctx.shadowColor = '#ff0055'; this.ctx.shadowBlur = 10;
+                this.ctx.fillRect(0, horizon, w, 2); this.ctx.shadowBlur = 0;
+            }
+        }
+
+        // --- GAME 1: MOTORCYCLE RACING ---
+        class MotoGame {
+            constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
+            reset() {
+                this.lanes = [400, 480, 560]; 
+                this.player = { laneIdx: 1, x: 150, y: this.lanes[1] };
+                this.enemies = []; this.speed = 400; this.bgOffset = 0; this.score = 0; this.spawnTimer = 0; this.isAlive = true;
+            }
+            update(dt) {
+                if(!this.isAlive) return;
+                this.score += 10 * dt; this.speed += 2 * dt; 
+                if(this.input.isDown('ArrowRight') && this.player.x < 400) this.player.x += 200 * dt;
+                if(this.input.isDown('ArrowLeft') && this.player.x > 50) this.player.x -= 200 * dt;
+                if(this.input.consume('ArrowUp') && this.player.laneIdx > 0) this.player.laneIdx--;
+                if(this.input.consume('ArrowDown') && this.player.laneIdx < 2) this.player.laneIdx++;
+                this.player.y += (this.lanes[this.player.laneIdx] - this.player.y) * 15 * dt;
+                this.bgOffset = (this.bgOffset + this.speed * dt) % 800;
+
+                this.spawnTimer += dt;
+                if(this.spawnTimer > 2.0 - (this.speed/2500)) {
+                    let l = Math.floor(Math.random() * 3);
+                    let canSpawn = true;
+                    for(let e of this.enemies) { if(e.laneIdx === l && e.x > 550) { canSpawn = false; break; } }
+                    if(canSpawn) { this.enemies.push({ laneIdx: l, x: 850, y: this.lanes[l], speed: 200 }); this.spawnTimer = 0; }
+                }
+
+                for(let i = this.enemies.length-1; i>=0; i--) {
+                    let e = this.enemies[i];
+                    e.x -= (this.speed - e.speed) * dt; 
+                    if(e.x < -100) { this.enemies.splice(i, 1); continue; }
+                    if(this.player.laneIdx === e.laneIdx && Math.abs(this.player.x - e.x) < 55) this.isAlive = false;
+                }
+            }
+            draw() {
+                this.ctx.fillStyle = '#2c3e50'; this.ctx.fillRect(0,0,800,300);
+                this.ctx.fillStyle = '#34495e';
+                for(let i=0; i<3; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo((i*400) - (this.bgOffset*0.2)%400, 300);
+                    this.ctx.lineTo((i*400)+200 - (this.bgOffset*0.2)%400, 100);
+                    this.ctx.lineTo((i*400)+400 - (this.bgOffset*0.2)%400, 300);
+                    this.ctx.fill();
+                }
+                this.ctx.fillStyle = '#555'; this.ctx.fillRect(0, 300, 800, 300);
+                this.ctx.fillStyle = '#fff';
+                for(let i=0; i<10; i++) {
+                    let lineX = (i*100) - (this.bgOffset % 100);
+                    this.ctx.fillRect(lineX, 440, 50, 4); this.ctx.fillRect(lineX, 520, 50, 4);
+                }
+                let entities = [ { ...this.player, isPlayer: true, color: '#3498db' } ];
+                this.enemies.forEach(e => entities.push({ ...e, isPlayer: false, color: '#e74c3c' }));
+                entities.sort((a,b) => a.y - b.y);
+                entities.forEach(ent => {
+                    let scale = 0.8 + (ent.y - 400) / 400; 
+                    drawMotoSide(this.ctx, ent.x, ent.y, scale, ent.color);
+                });
+            }
+            getScore() { return Math.floor(this.score); }
+        }
+
+        // --- GAME 2: CAR RACING (PRECÍZ 3D ÜTKÖZÉS JAVÍTVA) ---
+        class CarGame {
+            constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
+            reset() {
+                this.speed = 150; this.posZ = 0; this.playerX = 0; this.score = 0; this.isAlive = true; this.trackCurve = 0;
+                this.enemies = []; this.spawnTimer = 0;
+            }
+            update(dt) {
+                if(!this.isAlive) return;
+                this.score += 5 * dt; this.speed += 2 * dt; this.posZ += this.speed * dt;
+                this.trackCurve = Math.sin(this.posZ / 600) * 1.5;
+
+                // Irányítás (X tengelyen)
+                if(this.input.isDown('ArrowLeft') && this.playerX > -1.3) this.playerX -= 1.8 * dt;
+                if(this.input.isDown('ArrowRight') && this.playerX < 1.3) this.playerX += 1.8 * dt;
+
+                this.spawnTimer += dt;
+                if(this.spawnTimer > 1.2) {
+                    let lane = Math.floor(Math.random() * 3) - 1;
+                    this.enemies.push({ x: lane * 0.8, z: this.posZ + 600, speed: this.speed * 0.6 });
+                    this.spawnTimer = 0;
+                }
+
+                // PRECÍZ AABB 3D COLLISION DETECTION
+                for(let i = this.enemies.length-1; i>=0; i--) {
+                    let e = this.enemies[i];
+                    e.z += e.speed * dt;
+                    
+                    // Ha az ellenség elhagyta a képernyőt lefelé
+                    if(e.z < this.posZ - 100) { this.enemies.splice(i, 1); continue; }
+                    
+                    let relZ = e.z - this.posZ; // Ellenség távolsága a játékostól (Z)
+
+                    // Játékos (Player) pontos fizikai doboza
+                    let pLeft = this.playerX - 0.35;
+                    let pRight = this.playerX + 0.35;
+                    let pBack = -20; // Mennyire lóg hátra az autód (idegesítő bevágások megelőzése)
+                    let pFront = 20; // Mennyire lóg előre
+
+                    // Ellenség pontos fizikai doboza
+                    let eLeft = e.x - 0.35;
+                    let eRight = e.x + 0.35;
+                    let eBack = relZ - 15;
+                    let eFront = relZ + 15;
+
+                    // Átfedés vizsgálata (Overlapping)
+                    let overlapX = (pRight > eLeft) && (pLeft < eRight);
+                    let overlapZ = (pFront > eBack) && (pBack < eFront);
+
+                    if(overlapX && overlapZ) {
+                        this.isAlive = false; // BUMM! Game Over.
+                    }
+                }
+            }
+            draw() {
+                let w = this.canvas.width, h = this.canvas.height, horizon = h / 2 - 50;
+                this.ctx.fillStyle = '#87CEEB'; this.ctx.fillRect(0, 0, w, horizon);
+                this.ctx.fillStyle = '#f1c40f';
+                let sunX = w/2 - (this.trackCurve * 120); 
+                this.ctx.beginPath(); this.ctx.arc(sunX, horizon - 40, 30, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.fillStyle = '#2ecc71'; this.ctx.fillRect(0, horizon, w, h - horizon);
+
+                let drawDist = 300, segments = 30;
+                for(let i = segments; i > 0; i--) {
+                    let z1 = i * (drawDist / segments), z2 = (i-1) * (drawDist / segments);
+                    let colorIdx = Math.floor((this.posZ + z1) / 20) % 2;
+                    let scale1 = 150 / z1, scale2 = 150 / (z2 === 0 ? 0.1 : z2);
+                    let y1 = horizon + 50 * scale1, y2 = horizon + 50 * scale2;
+                    let roadW1 = 150 * scale1, roadW2 = 150 * scale2;
+                    let curveX1 = this.trackCurve * Math.pow(z1 / drawDist, 2) * 150;
+                    let curveX2 = this.trackCurve * Math.pow(z2 / drawDist, 2) * 150;
+                    let cx1 = w/2 - (this.playerX * roadW1) + curveX1;
+                    let cx2 = w/2 - (this.playerX * roadW2) + curveX2;
+
+                    this.ctx.fillStyle = colorIdx === 0 ? '#fff' : '#e74c3c';
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(cx1 - roadW1*1.1, y1); this.ctx.lineTo(cx1 + roadW1*1.1, y1);
+                    this.ctx.lineTo(cx2 + roadW2*1.1, y2); this.ctx.lineTo(cx2 - roadW2*1.1, y2);
+                    this.ctx.fill();
+
+                    this.ctx.fillStyle = colorIdx === 0 ? '#555' : '#444';
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(cx1 - roadW1, y1); this.ctx.lineTo(cx1 + roadW1, y1);
+                    this.ctx.lineTo(cx2 + roadW2, y2); this.ctx.lineTo(cx2 - roadW2, y2);
+                    this.ctx.fill();
+                }
+
+                this.enemies.sort((a,b) => b.z - a.z);
+                for(let e of this.enemies) {
+                    let dz = e.z - this.posZ;
+                    if(dz < -20) continue; 
+                    let scale = 150 / (dz < 1 ? 1 : dz); 
+                    let ey = horizon + 50 * scale;
+                    let eCurveX = this.trackCurve * Math.pow(dz / drawDist, 2) * 150;
+                    let ex = w/2 + ((e.x - this.playerX) * 150 * scale) + eCurveX;
+                    drawCarRear(this.ctx, ex, ey, scale * 1.5, '#f1c40f'); 
+                }
+                drawCarRear(this.ctx, w/2, h - 50, 2.5, '#e74c3c'); 
+            }
+            getScore() { return Math.floor(this.score); }
+        }
+
+        // --- GAME 3: GEOMETRY DASH ---
+        class DashGame {
+            constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
+            reset() {
+                this.groundY = 500;
+                this.player = { x: 150, y: this.groundY - 40, w: 40, h: 40, vy: 0 };
+                this.gravity = 2500; this.jumpForce = 850; this.obstacles = [];
+                this.score = 0; this.level = 1; this.baseSpeed = 400; this.spawnTimer = 0; this.isAlive = true; this.bgOffset = 0;
+            }
+            update(dt) {
+                if(!this.isAlive) return;
+                this.score += 20 * dt;
+                this.level = Math.min(5, Math.floor(this.score / 500) + 1);
+                let currentSpeed = this.baseSpeed + (this.level * 50);
+
+                let prevY = this.player.y;
+                this.player.vy += this.gravity * dt;
+                this.player.y += this.player.vy * dt;
+
+                let onGround = false;
+                if(this.player.y >= this.groundY - this.player.h) {
+                    this.player.y = this.groundY - this.player.h;
+                    this.player.vy = 0; onGround = true;
+                }
+
+                this.bgOffset = (this.bgOffset + currentSpeed * 0.5 * dt) % 100;
+
+                this.spawnTimer += dt;
+                if(this.spawnTimer > 1.2 - (this.level * 0.1)) {
+                    let rand = Math.random(), obsX = this.canvas.width;
+                    if(rand < 0.3 && this.level >= 2) this.obstacles.push({ type: 'flyblock', x: obsX, y: this.groundY - 100, w: 40, h: 40 });
+                    else if (rand < 0.6 && this.level >= 3) this.obstacles.push({ type: 'platform', x: obsX, y: this.groundY - 90, w: 120, h: 20 });
+                    else this.obstacles.push({ type: 'spike', x: obsX, y: this.groundY - 40, w: 40, h: 40 });
+                    this.spawnTimer = 0;
+                }
+
+                for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                    let o = this.obstacles[i];
+                    o.x -= currentSpeed * dt;
+                    if(o.x + o.w < 0) { this.obstacles.splice(i, 1); continue; }
+
+                    let hitW = o.type === 'spike' ? o.w * 0.6 : o.w;
+                    let hitH = o.type === 'spike' ? o.h * 0.8 : o.h;
+                    let hitX = o.type === 'spike' ? o.x + (o.w-hitW)/2 : o.x;
+                    let hitY = o.type === 'spike' ? o.y + (o.h-hitH) : o.y;
+                    
+                    let oBox = {x: hitX, y: hitY, w: hitW, h: hitH};
+                    let pBox = {x: this.player.x, y: this.player.y, w: this.player.w, h: this.player.h};
+
+                    if(pBox.x < oBox.x + oBox.w && pBox.x + pBox.w > oBox.x && pBox.y < oBox.y + oBox.h && pBox.y + pBox.h > oBox.y) {
+                        if(o.type === 'platform' && this.player.vy >= 0 && prevY + pBox.h <= oBox.y + 10) {
+                            this.player.y = oBox.y - pBox.h; this.player.vy = 0; onGround = true;
+                        } else this.isAlive = false;
+                    }
+                }
+                if(this.input.isDown('Space') && onGround) this.player.vy = -this.jumpForce;
+            }
+            draw() {
+                this.ctx.fillStyle = '#17102e'; this.ctx.fillRect(0,0,800,600);
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                for(let i=0; i<10; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo((i*100) - this.bgOffset, 0); this.ctx.lineTo((i*100) - this.bgOffset, this.groundY);
+                    this.ctx.stroke();
+                }
+                this.ctx.fillStyle = '#0a0a0a'; this.ctx.fillRect(0, this.groundY, 800, 600 - this.groundY);
+                this.ctx.fillStyle = '#00e5ff'; this.ctx.fillRect(0, this.groundY, 800, 3);
+
+                for(let o of this.obstacles) {
+                    if(o.type === 'spike') {
+                        this.ctx.fillStyle = '#ff0055';
+                        this.ctx.beginPath(); this.ctx.moveTo(o.x + o.w/2, o.y); this.ctx.lineTo(o.x + o.w, o.y + o.h); this.ctx.lineTo(o.x, o.y + o.h); this.ctx.fill();
+                    } else if (o.type === 'flyblock') {
+                        this.ctx.fillStyle = '#e67e22'; this.ctx.fillRect(o.x, o.y, o.w, o.h);
+                    } else if (o.type === 'platform') {
+                        this.ctx.fillStyle = '#2ecc71'; this.ctx.fillRect(o.x, o.y, o.w, o.h);
+                        this.ctx.fillStyle = 'rgba(0,0,0,0.5)'; this.ctx.fillRect(o.x, o.y + 5, o.w, o.h - 5);
+                    }
+                }
+                this.ctx.fillStyle = '#f1c40f'; this.ctx.fillRect(this.player.x, this.player.y, this.player.w, this.player.h);
+                this.ctx.fillStyle = '#f39c12'; this.ctx.fillRect(this.player.x+8, this.player.y+8, this.player.w-16, this.player.h-16);
+            }
+            getScore() { return Math.floor(this.score); }
+        }
+
+        // --- CORE MANAGER ---
+        class GameManager {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.input = new InputHandler();
+                
+                this.uiMenu = document.getElementById('mainMenu');
+                this.uiGameOver = document.getElementById('gameOver');
+                this.uiHud = document.getElementById('hud');
+                this.uiControls = document.getElementById('hud-controls');
+                this.elScore = document.getElementById('scoreVal');
+                this.elFinalScore = document.getElementById('finalScoreVal');
+                this.elLevelDisp = document.getElementById('levelDisplay');
+                this.elLevelVal = document.getElementById('levelVal');
+
+                this.menuBg = new MenuBackground(this.canvas, this.ctx);
+
+                this.activeGame = null;
+                this.activeGameName = '';
+                this.lastTime = performance.now();
+
+                requestAnimationFrame(t => this.loop(t));
+            }
+
+            showMenu() {
+                this.activeGame = null;
+                this.uiMenu.classList.remove('hidden');
+                this.uiGameOver.classList.add('hidden');
+                this.uiHud.classList.add('hidden');
+                this.uiControls.classList.add('hidden');
+            }
+
+            startGame(name) {
+                this.activeGameName = name;
+                if(name === 'moto') this.activeGame = new MotoGame(this.canvas, this.ctx, this.input);
+                if(name === 'car')  this.activeGame = new CarGame(this.canvas, this.ctx, this.input);
+                if(name === 'dash') this.activeGame = new DashGame(this.canvas, this.ctx, this.input);
+
+                if(name === 'dash') this.elLevelDisp.classList.remove('hidden');
+                else this.elLevelDisp.classList.add('hidden');
+
+                this.uiMenu.classList.add('hidden');
+                this.uiGameOver.classList.add('hidden');
+                this.uiHud.classList.remove('hidden');
+                this.uiControls.classList.remove('hidden');
+                this.lastTime = performance.now();
+            }
+
+            restartGame() { this.startGame(this.activeGameName); }
+
+            loop(t) {
+                let dt = (t - this.lastTime) / 1000;
+                this.lastTime = t;
+                if(dt > 0.1) dt = 0.1;
+
+                if(!this.activeGame) {
+                    this.menuBg.update(dt);
+                    this.menuBg.draw();
+                } else {
+                    if(this.input.consume('Escape')) {
+                        this.showMenu();
+                    } else if(this.activeGame.isAlive) {
+                        this.activeGame.update(dt);
+                        this.activeGame.draw();
+                        this.elScore.innerText = this.activeGame.getScore();
+                        
+                        if(this.activeGame.level) this.elLevelVal.innerText = this.activeGame.level;
+
+                        if(!this.activeGame.isAlive) {
+                            this.uiGameOver.classList.remove('hidden');
+                            this.uiHud.classList.add('hidden');
+                            this.uiControls.classList.add('hidden');
+                            this.elFinalScore.innerText = this.activeGame.getScore();
+                        }
+                    }
+                }
+                requestAnimationFrame(t => this.loop(t));
+            }
+        }
+
+        const app = new GameManager();
+        app.showMenu();
+    </script>
+</body>
+</html>
