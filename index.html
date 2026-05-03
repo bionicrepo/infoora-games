@@ -50,6 +50,15 @@
         .lvl-text { color: #f1c40f; margin-left: 10px; }
         .tip { font-size: 0.8rem; color: #39ff14; margin-top: 5px; }
 
+        /* VISSZA GOMB TELEFONRA */
+        #mobileMenuBtn {
+            position: absolute; top: 15px; right: 15px; z-index: 25;
+            background: rgba(255, 0, 85, 0.3); border: 2px solid rgba(255, 0, 85, 0.6);
+            color: #fff; padding: 8px 15px; font-weight: bold; font-size: 1rem; border-radius: 6px;
+            cursor: pointer; text-shadow: 1px 1px 2px #000; box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+        }
+        #mobileMenuBtn:active { background: rgba(255, 0, 85, 0.7); box-shadow: 0 0 15px rgba(255, 0, 85, 0.6); }
+
         #mobileControls {
             position: absolute; bottom: 20px; left: 0; width: 100%; height: 160px;
             display: flex; justify-content: space-between; padding: 0 20px;
@@ -80,6 +89,8 @@
         
         <div id="hud" class="hidden">Pont: <span id="scoreVal">0</span><span id="levelDisplay" class="hidden lvl-text">Szint: <span id="levelVal">1</span></span></div>
         <div id="hud-controls" class="hidden">ESC: Menü<div class="tip hidden" id="aimTip">Kattints a fegyverhez!</div></div>
+        
+        <div id="mobileMenuBtn" class="hidden">MENÜ</div>
 
         <!-- MOBILE VIRTUAL CONTROLS -->
         <div id="mobileControls" class="hidden">
@@ -164,7 +175,6 @@
                     'Digit1': 'Digit1', 'Digit2': 'Digit2', 'Digit3': 'Digit3', 'Digit4': 'Digit4', 'Digit5': 'Digit5'
                 };
 
-                // JAVÍTVA: Az egyszeri gombnyomás regisztrálása (MotoGame sávváltáshoz elengedhetetlen!)
                 window.addEventListener('keydown', e => { 
                     if(keyMap[e.code]) {
                         if (!this.keys[keyMap[e.code]]) {
@@ -199,7 +209,6 @@
                     if(e.button === 0) { 
                         this.mouse.down = true; 
                         this.consumes.click = true; 
-                        // Mine2D-nél nem állítjuk be a keys.action-t egérkattintásra!
                         if (window.app && window.app.activeGameName !== 'mine') {
                             this.keys.action = true; 
                             this.consumes.action = true; 
@@ -217,7 +226,7 @@
 
                 let lastTouchX = 0; let lastTouchY = 0;
                 cvs.addEventListener('touchstart', e => {
-                    if (e.target.classList.contains('m-btn')) return;
+                    if (e.target.classList.contains('m-btn') || e.target.id === 'mobileMenuBtn') return;
                     let r = cvs.getBoundingClientRect();
                     this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width);
                     this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height);
@@ -225,7 +234,7 @@
                     this.consumes.click = true;
                 });
                 cvs.addEventListener('touchmove', e => {
-                    if (e.target.classList.contains('m-btn')) return;
+                    if (e.target.classList.contains('m-btn') || e.target.id === 'mobileMenuBtn') return;
                     e.preventDefault();
                     let dx = e.touches[0].clientX - lastTouchX; let dy = e.touches[0].clientY - lastTouchY;
                     this.movementX += dx * 2; this.movementY += dy * 2;
@@ -402,7 +411,6 @@
                     this.p.vy = 0;
                 }
 
-                // JAVÍTVA: Az ugrás mostantól TÉNYLEG külön van a bal klikktől!
                 if((this.input.isDown('up') || this.input.keys.action) && onGround) {
                     this.p.vy = -500;
                 }
@@ -781,9 +789,19 @@
                 this.elLevelVal = document.getElementById('levelVal');
                 this.mobileUI = document.getElementById('mobileControls');
                 this.aimTip = document.getElementById('aimTip');
+                
+                // ÚJ: Mobil Vissza Gomb referencia
+                this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
 
-                // JAVÍTVA: Szigorú mobil detektálás (User Agent alapján, nem képernyő touchPoint alapján!)
                 this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                // Gomb eseménykezelője (mind a kattintást, mind az érintést figyeli a biztonság kedvéért)
+                const showMenuHandler = (e) => {
+                    e.preventDefault();
+                    this.showMenu();
+                };
+                this.mobileMenuBtn.addEventListener('touchstart', showMenuHandler);
+                this.mobileMenuBtn.addEventListener('mousedown', showMenuHandler);
 
                 this.menuBg = new MenuBackground(this.canvas, this.ctx);
                 this.activeGame = null; 
@@ -801,6 +819,7 @@
                 this.uiHud.classList.add('hidden'); 
                 this.uiControls.classList.add('hidden');
                 this.mobileUI.classList.add('hidden');
+                this.mobileMenuBtn.classList.add('hidden'); // Gomb elrejtése a menüben
                 this.input.clearConsumes();
             }
 
@@ -822,10 +841,14 @@
                 this.uiMenu.classList.add('hidden'); 
                 this.uiGameOver.classList.add('hidden');
                 this.uiHud.classList.remove('hidden'); 
-                this.uiControls.classList.remove('hidden');
                 
+                // Mobilon megjelenítjük a dedikált gombot a gépes szöveg helyett
                 if(this.isMobile) {
                     this.mobileUI.classList.remove('hidden');
+                    this.uiControls.classList.add('hidden'); // Eltüntetjük az "ESC: Menü" szöveget
+                    this.mobileMenuBtn.classList.remove('hidden'); // Megjelenítjük a piros gombot
+                } else {
+                    this.uiControls.classList.remove('hidden');
                 }
 
                 if (name === 'royale' && !this.isMobile) {
@@ -870,6 +893,7 @@
                                 this.uiHud.classList.add('hidden'); 
                                 this.uiControls.classList.add('hidden');
                                 this.mobileUI.classList.add('hidden');
+                                this.mobileMenuBtn.classList.add('hidden');
                                 this.elFinalScore.innerText = this.activeGame.getScore();
                             }
                         }
