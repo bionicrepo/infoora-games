@@ -2,67 +2,127 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arcade Hub - Cyberpunk Edition (4 Games)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arcade Hub - Ultimate 6 Games</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-        body { background-color: #050505; color: #ffffff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        #gameContainer { position: relative; width: 800px; height: 600px; box-shadow: 0 10px 50px rgba(0,0,0,1), 0 0 30px rgba(0,229,255,0.1); border-radius: 12px; overflow: hidden; background-color: #000; }
-        canvas { display: block; width: 100%; height: 100%; }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(5,5,15,0.4); backdrop-filter: blur(2px); z-index: 10; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
+        body { 
+            background-color: #020010; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; 
+        }
+        
+        #gameContainer { 
+            position: relative; 
+            width: 100%; max-width: 800px; 
+            height: 100%; max-height: 600px;
+            aspect-ratio: 4 / 3; 
+            box-shadow: 0 10px 50px rgba(0,0,0,1), 0 0 30px rgba(0,229,255,0.1); 
+            border-radius: 8px; overflow: hidden; background-color: #050510; 
+        }
+        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+
+        .overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            background: rgba(5,5,15,0.8); backdrop-filter: blur(4px); z-index: 10; 
+        }
         .hidden { display: none !important; }
-        h1 { font-size: 4rem; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 8px; color: #fff; text-shadow: 0 0 5px #fff, 0 0 20px #00e5ff, 0 0 40px #00e5ff; }
-        h2 { font-size: 2.5rem; margin-bottom: 20px; color: #ff0055; text-shadow: 0 0 15px rgba(255,0,85,0.8); }
-        p { font-size: 1.5rem; margin-bottom: 30px; text-shadow: 1px 1px 5px #000; }
-        .btn-group { display: flex; flex-direction: column; gap: 15px; width: 350px;}
-        button { background: rgba(0,229,255,0.05); color: #fff; border: 1px solid rgba(0,229,255,0.5); padding: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; box-shadow: inset 0 0 10px rgba(0,229,255,0.1); position: relative; overflow: hidden; }
-        button::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent); transform: skewX(-25deg); transition: 0.5s; }
-        button:hover { background: rgba(0,229,255,0.2); transform: scale(1.05); box-shadow: 0 0 20px rgba(0,229,255,0.6); border-color: #00e5ff; }
-        button:hover::before { left: 200%; }
+        
+        h1 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; color: #fff; text-shadow: 0 0 10px #fff, 0 0 20px #00e5ff; text-align: center; }
+        h2 { font-size: 2.5rem; margin-bottom: 10px; color: #ff0055; text-shadow: 0 0 15px rgba(255,0,85,0.8); }
+        p { font-size: 1.2rem; margin-bottom: 15px; text-shadow: 1px 1px 5px #000; text-align: center; }
+        
+        .btn-group { display: flex; flex-direction: column; gap: 8px; width: 80%; max-width: 350px;}
+        button { 
+            background: rgba(0,229,255,0.05); color: #fff; border: 1px solid rgba(0,229,255,0.5); 
+            padding: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 6px; 
+            transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; box-shadow: inset 0 0 10px rgba(0,229,255,0.1); 
+        }
+        button:hover { background: rgba(0,229,255,0.2); transform: scale(1.02); box-shadow: 0 0 15px rgba(0,229,255,0.5); border-color: #00e5ff; }
         button.danger { border-color: rgba(255,0,85,0.5); }
-        button.danger:hover { background: rgba(255,0,85,0.2); border-color: #ff0055; box-shadow: 0 0 20px rgba(255,0,85,0.6); }
-        #hud { position: absolute; top: 15px; left: 20px; z-index: 5; font-size: 1.5rem; font-weight: bold; text-shadow: 2px 2px 4px #000; }
-        #hud-controls { position: absolute; top: 15px; right: 20px; z-index: 5; font-size: 1.2rem; color: #fff; text-shadow: 2px 2px 4px #000; }
-        .lvl-text { color: #f1c40f; margin-left: 20px; }
+        button.danger:hover { background: rgba(255,0,85,0.2); border-color: #ff0055; box-shadow: 0 0 15px rgba(255,0,85,0.5); }
+        
+        .mc-btn { border-color: #4CAF50 !important; box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.2); }
+        .mc-btn:hover { background: rgba(76, 175, 80, 0.2); border-color: #4CAF50; box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); }
+
+        #hud { position: absolute; top: 15px; left: 20px; z-index: 5; font-size: clamp(1.2rem, 3vw, 1.5rem); font-weight: bold; text-shadow: 2px 2px 4px #000; pointer-events: none;}
+        #hud-controls { position: absolute; top: 15px; right: 20px; z-index: 5; font-size: 1rem; color: #ccc; text-shadow: 2px 2px 4px #000; text-align: right; pointer-events: none;}
+        .lvl-text { color: #f1c40f; margin-left: 10px; }
+        .tip { font-size: 0.8rem; color: #39ff14; margin-top: 5px; }
+
+        #mobileControls {
+            position: absolute; bottom: 20px; left: 0; width: 100%; height: 160px;
+            display: flex; justify-content: space-between; padding: 0 20px;
+            z-index: 20; pointer-events: none;
+        }
+        .d-pad { position: relative; width: 150px; height: 150px; pointer-events: auto; }
+        .m-btn {
+            position: absolute; background: rgba(0, 229, 255, 0.15); border: 2px solid rgba(0, 229, 255, 0.5);
+            color: #fff; font-weight: bold; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); font-size: 1.5rem; text-shadow: 1px 1px 2px #000;
+        }
+        .m-btn:active { background: rgba(0, 229, 255, 0.6); box-shadow: 0 0 20px rgba(0, 229, 255, 0.8); }
+        
+        .btn-up { top: 0; left: 50px; width: 50px; height: 50px; }
+        .btn-down { bottom: 0; left: 50px; width: 50px; height: 50px; }
+        .btn-left { top: 50px; left: 0; width: 50px; height: 50px; }
+        .btn-right { top: 50px; right: 0; width: 50px; height: 50px; }
+        
+        .action-pad { position: relative; width: 120px; height: 150px; pointer-events: auto; display: flex; justify-content: center; align-items: center;}
+        .btn-action { position: relative; width: 90px; height: 90px; border-radius: 50%; background: rgba(255, 0, 85, 0.2); border: 2px solid rgba(255, 0, 85, 0.6); box-shadow: 0 0 15px rgba(255, 0, 85, 0.3); font-size: 1.2rem; }
+        .btn-action:active { background: rgba(255, 0, 85, 0.6); box-shadow: 0 0 25px rgba(255, 0, 85, 0.8); }
     </style>
 </head>
 <body>
 
     <div id="gameContainer">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <div id="hud" class="hidden">Pont: <span id="scoreVal">0</span><span id="levelDisplay" class="hidden lvl-text">Szint: <span id="levelVal">1</span>/5</span></div>
-        <div id="hud-controls" class="hidden">ESC: Menü</div>
+        
+        <div id="hud" class="hidden">Pont: <span id="scoreVal">0</span><span id="levelDisplay" class="hidden lvl-text">Szint: <span id="levelVal">1</span></span></div>
+        <div id="hud-controls" class="hidden">ESC: Menü<div class="tip hidden" id="aimTip">Kattints a fegyverhez!</div></div>
+
+        <!-- MOBILE VIRTUAL CONTROLS -->
+        <div id="mobileControls" class="hidden">
+            <div class="d-pad">
+                <div class="m-btn btn-up" data-key="up">▲</div>
+                <div class="m-btn btn-down" data-key="down">▼</div>
+                <div class="m-btn btn-left" data-key="left">◀</div>
+                <div class="m-btn btn-right" data-key="right">▶</div>
+            </div>
+            <div class="action-pad">
+                <div class="m-btn btn-action" data-key="action">LŐ/UGRÁS</div>
+            </div>
+        </div>
 
         <div id="mainMenu" class="overlay">
             <h1>Arcade Hub</h1>
             <div class="btn-group">
-                <button onclick="app.startGame('slope')">Slope (3D Runner)</button>
-                <button onclick="app.startGame('moto')">Motorverseny (2.5D)</button>
-                <button onclick="app.startGame('car')">Autóverseny (3D Retro)</button>
-                <button onclick="app.startGame('dash')">Geometry Dash (5 Szint)</button>
+                <button onclick="window.app.startGame('mine')" class="mc-btn">Mine2D (Építő & Túlélő!)</button>
+                <button onclick="window.app.startGame('royale')" style="border-color:#39ff14;">Neon Royale (3D FPS)</button>
+                <button onclick="window.app.startGame('slope')">Slope 3D</button>
+                <button onclick="window.app.startGame('moto')">Motorverseny</button>
+                <button onclick="window.app.startGame('car')">Autóverseny</button>
+                <button onclick="window.app.startGame('dash')">Geometry Dash</button>
             </div>
         </div>
 
         <div id="gameOver" class="overlay hidden">
-            <h2>Rendszerhiba (Game Over)</h2>
+            <h2>Game Over</h2>
             <p>Elért pontszám: <span id="finalScoreVal">0</span></p>
             <div class="btn-group">
-                <button onclick="app.restartGame()">Rendszer Újraindítása</button>
-                <button class="danger" onclick="app.showMenu()">Főmenü</button>
+                <button onclick="window.app.restartGame()">Újraindítás</button>
+                <button class="danger" onclick="window.app.showMenu()">Főmenü</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- INPUT HANDLER ---
-        class InputHandler {
-            constructor() {
-                this.keys = {};
-                window.addEventListener('keydown', e => this.keys[e.code] = true);
-                window.addEventListener('keyup', e => this.keys[e.code] = false);
-            }
-            isDown(code) { return this.keys[code] === true; }
-            consume(code) { if(this.keys[code]) { this.keys[code] = false; return true; } return false; }
+        function drawSafeRoundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius); ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height); ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius); ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath(); ctx.fill();
         }
 
         function drawMotoSide(ctx, x, y, scale, color) {
@@ -80,7 +140,7 @@
             ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
             let w = 80, h = 40, hw = w/2;
             ctx.fillStyle = '#111'; ctx.fillRect(-hw - 5, -5, 15, 15); ctx.fillRect(hw - 10, -5, 15, 15);
-            ctx.fillStyle = color; ctx.beginPath(); ctx.roundRect(-hw, -25, w, 25, 5); ctx.fill();
+            ctx.fillStyle = color; drawSafeRoundRect(ctx, -hw, -25, w, 25, 5);
             ctx.fillStyle = '#333'; ctx.beginPath(); ctx.moveTo(-hw + 10, -25); ctx.lineTo(hw - 10, -25); ctx.lineTo(hw - 20, -45); ctx.lineTo(-hw + 20, -45); ctx.fill();
             ctx.fillStyle = '#87CEEB'; ctx.beginPath(); ctx.moveTo(-hw + 12, -27); ctx.lineTo(hw - 12, -27); ctx.lineTo(hw - 18, -42); ctx.lineTo(-hw + 18, -42); ctx.fill();
             ctx.fillStyle = '#ff0000'; ctx.fillRect(-hw + 5, -15, 15, 8); ctx.fillRect(hw - 20, -15, 15, 8);
@@ -88,21 +148,136 @@
             ctx.restore();
         }
 
-        // --- CYBERPUNK MENU BACKGROUND ---
+        class InputHandler {
+            constructor() {
+                this.keys = { up: false, down: false, left: false, right: false, action: false, q: false, e: false };
+                for(let i=1; i<=5; i++) this.keys['Digit'+i] = false;
+                
+                this.mouse = { x: 400, y: 300, down: false };
+                this.movementX = 0; this.movementY = 0;
+                this.consumes = { esc: false, click: false, up: false, down: false, left: false, right: false, action: false };
+
+                const keyMap = {
+                    'ArrowUp': 'up', 'KeyW': 'up', 'ArrowDown': 'down', 'KeyS': 'down',
+                    'ArrowLeft': 'left', 'KeyA': 'left', 'ArrowRight': 'right', 'KeyD': 'right',
+                    'Space': 'action', 'KeyQ': 'q', 'KeyE': 'e',
+                    'Digit1': 'Digit1', 'Digit2': 'Digit2', 'Digit3': 'Digit3', 'Digit4': 'Digit4', 'Digit5': 'Digit5'
+                };
+
+                // JAVÍTVA: Az egyszeri gombnyomás regisztrálása (MotoGame sávváltáshoz elengedhetetlen!)
+                window.addEventListener('keydown', e => { 
+                    if(keyMap[e.code]) {
+                        if (!this.keys[keyMap[e.code]]) {
+                            this.consumes[keyMap[e.code]] = true;
+                        }
+                        this.keys[keyMap[e.code]] = true; 
+                    }
+                    if(e.code === 'Escape') this.consumes.esc = true;
+                });
+                window.addEventListener('keyup', e => { 
+                    if(keyMap[e.code]) this.keys[keyMap[e.code]] = false; 
+                });
+
+                let cvs = document.getElementById('gameCanvas');
+                
+                cvs.addEventListener('click', () => {
+                    if (window.app && window.app.activeGameName === 'royale') {
+                        if (document.pointerLockElement !== cvs) cvs.requestPointerLock();
+                    }
+                });
+
+                window.addEventListener('mousemove', e => {
+                    if (document.pointerLockElement === cvs) {
+                        this.movementX += e.movementX; this.movementY += e.movementY;
+                    }
+                    let r = cvs.getBoundingClientRect();
+                    this.mouse.x = (e.clientX - r.left) * (800 / r.width);
+                    this.mouse.y = (e.clientY - r.top) * (600 / r.height);
+                });
+                
+                window.addEventListener('mousedown', e => { 
+                    if(e.button === 0) { 
+                        this.mouse.down = true; 
+                        this.consumes.click = true; 
+                        // Mine2D-nél nem állítjuk be a keys.action-t egérkattintásra!
+                        if (window.app && window.app.activeGameName !== 'mine') {
+                            this.keys.action = true; 
+                            this.consumes.action = true; 
+                        }
+                    } 
+                });
+                window.addEventListener('mouseup', e => { 
+                    if(e.button === 0) { 
+                        this.mouse.down = false; 
+                        if (window.app && window.app.activeGameName !== 'mine') {
+                            this.keys.action = false;
+                        }
+                    } 
+                });
+
+                let lastTouchX = 0; let lastTouchY = 0;
+                cvs.addEventListener('touchstart', e => {
+                    if (e.target.classList.contains('m-btn')) return;
+                    let r = cvs.getBoundingClientRect();
+                    this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width);
+                    this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height);
+                    lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
+                    this.consumes.click = true;
+                });
+                cvs.addEventListener('touchmove', e => {
+                    if (e.target.classList.contains('m-btn')) return;
+                    e.preventDefault();
+                    let dx = e.touches[0].clientX - lastTouchX; let dy = e.touches[0].clientY - lastTouchY;
+                    this.movementX += dx * 2; this.movementY += dy * 2;
+                    lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
+                }, { passive: false });
+
+                document.querySelectorAll('.m-btn').forEach(btn => {
+                    btn.addEventListener('touchstart', e => { 
+                        e.preventDefault(); 
+                        let key = btn.dataset.key;
+                        if(key === 'action') { 
+                            this.mouse.down = true; 
+                            this.keys.action = true; 
+                            this.consumes.action = true; 
+                        } else {
+                            if (!this.keys[key]) this.consumes[key] = true;
+                            this.keys[key] = true; 
+                        }
+                    });
+                    btn.addEventListener('touchend', e => { 
+                        e.preventDefault(); 
+                        let key = btn.dataset.key;
+                        if(key === 'action') { 
+                            this.mouse.down = false; 
+                            this.keys.action = false; 
+                        } else {
+                            this.keys[key] = false; 
+                        }
+                    });
+                });
+            }
+            isDown(k) { return this.keys[k] === true || (k === 'action' && this.mouse.down && window.app.activeGameName !== 'mine'); }
+            consume(k) { if(this.consumes[k]) { this.consumes[k] = false; return true; } return false; }
+            clearConsumes() { for(let k in this.consumes) this.consumes[k] = false; }
+        }
+
         class MenuBackground {
             constructor(canvas, ctx) {
                 this.canvas = canvas; this.ctx = ctx; this.time = 0; this.buildings = [];
                 let x = 0;
                 while(x < 1200) {
-                    let w = 40 + Math.random() * 80, h = 100 + Math.random() * 250, windows = [];
-                    for(let wy = 10; wy < h - 20; wy += 20) { for(let wx = 10; wx < w - 15; wx += 15) { if(Math.random() > 0.6) windows.push({x: wx, y: wy}); } }
+                    let w = 40 + Math.random() * 80; let h = 100 + Math.random() * 250; let windows = [];
+                    for(let wy = 10; wy < h - 20; wy += 20) { 
+                        for(let wx = 10; wx < w - 15; wx += 15) { if(Math.random() > 0.6) windows.push({x: wx, y: wy}); } 
+                    }
                     this.buildings.push({ x: x, w: w, h: h, windows: windows, neon: Math.random() > 0.5 ? '#00e5ff' : '#ff0055' });
                     x += w + 5 + Math.random() * 20;
                 }
             }
             update(dt) { this.time += dt; }
             draw() {
-                let w = this.canvas.width, h = this.canvas.height, horizon = h / 2 + 50;
+                let w = this.canvas.width; let h = this.canvas.height; let horizon = (h / 2) + 50;
                 let skyGrad = this.ctx.createLinearGradient(0, 0, 0, horizon);
                 skyGrad.addColorStop(0, '#020014'); skyGrad.addColorStop(1, '#2d0036'); 
                 this.ctx.fillStyle = skyGrad; this.ctx.fillRect(0, 0, w, horizon);
@@ -111,7 +286,7 @@
                 let sunGrad = this.ctx.createLinearGradient(0, -80, 0, 80);
                 sunGrad.addColorStop(0, '#ff007f'); sunGrad.addColorStop(1, '#ffc000');
                 this.ctx.fillStyle = sunGrad; this.ctx.beginPath(); this.ctx.arc(0, 0, 100, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.fillStyle = '#2d0036'; for(let i=0; i<6; i++) this.ctx.fillRect(-100, 20 + i*15, 200, 2 + i*1.5);
+                this.ctx.fillStyle = '#2d0036'; for(let i=0; i<6; i++) { this.ctx.fillRect(-100, 20 + i*15, 200, 2 + i*1.5); }
                 this.ctx.restore();
 
                 let bgOffset = (this.time * 20) % 1200;
@@ -138,7 +313,7 @@
                     let y = horizon + (2000 / z);
                     if (y > horizon && y < h) { this.ctx.beginPath(); this.ctx.moveTo(0, y); this.ctx.lineTo(w, y); this.ctx.globalAlpha = Math.max(0, 1 - (z/400)); this.ctx.stroke(); }
                 }
-                this.ctx.globalAlpha = 0.6; let vpX = w/2, vpY = horizon;
+                this.ctx.globalAlpha = 0.6; let vpX = w/2; let vpY = horizon;
                 for(let i=-20; i<20; i++) { this.ctx.beginPath(); this.ctx.moveTo(vpX, vpY); this.ctx.lineTo(vpX + (i * 100), h); this.ctx.stroke(); }
                 this.ctx.globalAlpha = 1.0;
                 this.ctx.fillStyle = '#ff0055'; this.ctx.shadowColor = '#ff0055'; this.ctx.shadowBlur = 10;
@@ -146,447 +321,555 @@
             }
         }
 
-        // --- GAME 1: SLOPE (GOLYÓVAL ÉS UGRATÓKKAL) ---
-        class SlopeGame {
+        // ==========================================
+        // MINE 2D
+        // ==========================================
+        class MineGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
             
             reset() {
-                this.speed = 500; this.posZ = 0; this.score = 0; this.isAlive = true;
+                this.tileSize = 30; this.cols = 100; this.rows = 60;
+                this.map = [];
                 
-                this.playerOffset = 0; 
-                this.playerVelocity = 0;
-                this.playerJumpHeight = 0;
-                this.playerJumpVy = 0;
-                
-                this.segments = []; this.trackX = 0; this.curve = 0; this.targetCurve = 0;
-                this.fallOffset = 0; 
-                
-                this.lastObsZ = 0;
-                this.lastRampZ = 0;
-
-                for(let i=0; i<60; i++) this.addSegment(i * 50);
-            }
-
-            addSegment(z) {
-                if (z % 1000 === 0) this.targetCurve = (Math.random() - 0.5) * 6; 
-                this.curve += (this.targetCurve - this.curve) * 0.05;
-                this.trackX += this.curve * 5;
-                
-                let hasObs = false;
-                let hasRamp = false;
-                let obsX = 0;
-
-                // Ritkább akadályok, logikusabb ugratók
-                if (z > 1000) {
-                    if (z - this.lastObsZ > 1200 && Math.random() < 0.3) {
-                        hasObs = true;
-                        obsX = (Math.random() - 0.5) * 120;
-                        this.lastObsZ = z;
-                    } else if (z - this.lastRampZ > 1500 && Math.random() < 0.4) {
-                        hasRamp = true;
-                        this.lastRampZ = z;
+                for(let x=0; x<this.cols; x++) {
+                    this.map[x] = [];
+                    let h = 30 + Math.floor(Math.sin(x/5)*3 + Math.sin(x/2)*2);
+                    for(let y=0; y<this.rows; y++) {
+                        if (y < h) this.map[x][y] = 0;
+                        else if (y === h) this.map[x][y] = 1; 
+                        else if (y > h && y < h + 4) this.map[x][y] = 2; 
+                        else this.map[x][y] = 3; 
                     }
                 }
 
-                this.segments.push({ z: z, x: this.trackX, w: 200, curve: this.curve, hasObs: hasObs, obsX: obsX, hasRamp: hasRamp });
+                for(let x=3; x<this.cols-3; x++) {
+                    let h = 30 + Math.floor(Math.sin(x/5)*3 + Math.sin(x/2)*2);
+                    if (Math.random() < 0.08) { 
+                        this.map[x][h-1] = 4; this.map[x][h-2] = 4; 
+                        this.map[x-1][h-3] = 5; this.map[x][h-3] = 5; this.map[x+1][h-3] = 5; 
+                        this.map[x][h-4] = 5; 
+                    }
+                }
+                
+                this.p = { x: 50 * this.tileSize, y: 10 * this.tileSize, w: 20, h: 38, vx: 0, vy: 0 };
+                this.cam = { x: this.p.x - 400, y: this.p.y - 300 };
+                
+                this.selectedBlock = 4; 
+                this.colors = [null, '#4CAF50', '#795548', '#9E9E9E', '#5D4037', '#2E7D32'];
+                this.isAlive = true;
+            }
+
+            getBlock(tx, ty) {
+                if(tx>=0 && tx<this.cols && ty>=0 && ty<this.rows) return this.map[tx][ty];
+                return 3; 
+            }
+
+            setBlock(tx, ty, val) {
+                if(tx>=0 && tx<this.cols && ty>=0 && ty<this.rows) this.map[tx][ty] = val;
+            }
+
+            collide(x, y) {
+                let left = Math.floor(x / this.tileSize); let right = Math.floor((x + this.p.w - 0.1) / this.tileSize);
+                let top = Math.floor(y / this.tileSize); let bottom = Math.floor((y + this.p.h - 0.1) / this.tileSize);
+                for(let tx = left; tx <= right; tx++) {
+                    for(let ty = top; ty <= bottom; ty++) {
+                        if(this.getBlock(tx, ty) !== 0) return true;
+                    }
+                }
+                return false;
             }
 
             update(dt) {
-                if(!this.isAlive) {
-                    this.fallOffset += 1200 * dt; // Leesés animáció
-                    return; 
-                }
+                for(let i=1; i<=5; i++) { if(this.input.keys['Digit'+i]) this.selectedBlock = i; }
 
-                this.score += 10 * dt; this.speed += 5 * dt; this.posZ += this.speed * dt;
-
-                // A golyó valós, fizikai Z koordinátája (200 egységgel a kamera előtt)
-                let ballZ = this.posZ + 200;
-
-                // Irányítás 
-                if(this.input.isDown('ArrowLeft')) this.playerVelocity -= 3000 * dt;
-                if(this.input.isDown('ArrowRight')) this.playerVelocity += 3000 * dt;
+                let move = 0;
+                if(this.input.isDown('left')) move -= 1;
+                if(this.input.isDown('right')) move += 1;
                 
-                this.playerVelocity *= 0.9;
-                this.playerOffset += this.playerVelocity * dt;
+                this.p.vx = move * 200; this.p.x += this.p.vx * dt;
+                if(this.collide(this.p.x, this.p.y)) this.p.x -= this.p.vx * dt;
 
-                // Ugrás Fizika
-                if (this.playerJumpHeight > 0 || this.playerJumpVy !== 0) {
-                    this.playerJumpVy -= 2500 * dt; // Gravitáció a levegőben
-                    this.playerJumpHeight += this.playerJumpVy * dt;
-                    if (this.playerJumpHeight < 0) {
-                        this.playerJumpHeight = 0;
-                        this.playerJumpVy = 0;
+                this.p.vy += 1500 * dt; this.p.y += this.p.vy * dt;
+                let onGround = false;
+                
+                if(this.collide(this.p.x, this.p.y)) {
+                    if(this.p.vy > 0) {
+                        this.p.y = Math.floor((this.p.y + this.p.h) / this.tileSize) * this.tileSize - this.p.h;
+                        onGround = true;
+                    } else {
+                        this.p.y = Math.floor(this.p.y / this.tileSize + 1) * this.tileSize;
                     }
+                    this.p.vy = 0;
                 }
 
-                // Régi pályaelemek törlése
-                while (this.segments.length > 0 && this.segments[0].z < this.posZ - 50) {
-                    this.segments.shift();
-                    let lastZ = this.segments[this.segments.length - 1].z;
-                    this.addSegment(lastZ + 50);
+                // JAVÍTVA: Az ugrás mostantól TÉNYLEG külön van a bal klikktől!
+                if((this.input.isDown('up') || this.input.keys.action) && onGround) {
+                    this.p.vy = -500;
                 }
 
-                // Ütközésvizsgálat (A golyó alatt lévő szakaszt nézzük)
-                let currentSeg = this.segments.find(s => s.z > ballZ - 50);
-                if (currentSeg) {
-                    
-                    // Csak a földön hat ránk a kanyar dőlése (centrifugális erő)
-                    if (this.playerJumpHeight === 0) {
-                        this.playerVelocity -= currentSeg.curve * 150 * dt;
+                if(this.input.consume('click')) {
+                    let screenX = this.input.mouse.x; let screenY = this.input.mouse.y;
+
+                    if (screenY >= 530 && screenX >= 290 && screenX <= 510) {
+                        let idx = Math.floor((screenX - 300) / 40);
+                        if (idx >= 0 && idx < 5) { this.selectedBlock = idx + 1; return; }
                     }
 
-                    // 1. Leesés a pályáról
-                    if (Math.abs(this.playerOffset) > currentSeg.w / 2 && this.playerJumpHeight === 0) {
-                        this.isAlive = false;
-                    }
+                    let wx = screenX + this.cam.x; let wy = screenY + this.cam.y;
+                    let tx = Math.floor(wx / this.tileSize); let ty = Math.floor(wy / this.tileSize);
+                    let cx = this.p.x + this.p.w/2; let cy = this.p.y + this.p.h/2;
 
-                    // 2. Ráléptünk egy ugratóra? (Csak ha a földön vagyunk)
-                    if (currentSeg.hasRamp && this.playerJumpHeight === 0) {
-                        let distToRamp = currentSeg.z - ballZ;
-                        if (distToRamp > -20 && distToRamp < 40) {
-                            this.playerJumpVy = 850; // Kilöves!!!
-                        }
-                    }
-
-                    // 3. Nekimentünk egy akadálynak?
-                    if (currentSeg.hasObs) {
-                        let distToObs = currentSeg.z - ballZ;
-                        // Ha nem ugrunk eléggé magasra (akadály magasság ~40)
-                        if (distToObs > -20 && distToObs < 40 && this.playerJumpHeight < 40) { 
-                            if (Math.abs(this.playerOffset - currentSeg.obsX) < 30) {
-                                this.isAlive = false; // Bumm
+                    if(Math.hypot(wx - cx, wy - cy) < 180) {
+                        let b = this.getBlock(tx, ty);
+                        if(b !== 0) {
+                            this.setBlock(tx, ty, 0); 
+                        } else {
+                            let pLeft = Math.floor(this.p.x / this.tileSize);
+                            let pRight = Math.floor((this.p.x + this.p.w - 0.1) / this.tileSize);
+                            let pTop = Math.floor(this.p.y / this.tileSize);
+                            let pBottom = Math.floor((this.p.y + this.p.h - 0.1) / this.tileSize);
+                            
+                            if(!(tx >= pLeft && tx <= pRight && ty >= pTop && ty <= pBottom)) {
+                                this.setBlock(tx, ty, this.selectedBlock);
                             }
                         }
                     }
                 }
+
+                this.cam.x += (this.p.x - 400 - this.cam.x) * 5 * dt;
+                this.cam.y += (this.p.y - 300 - this.cam.y) * 5 * dt;
+                if(this.p.y > this.rows * this.tileSize + 300) this.isAlive = false;
             }
 
             draw() {
-                this.ctx.fillStyle = '#020010'; this.ctx.fillRect(0,0,800,600); // Égbolt
+                this.ctx.fillStyle = '#87CEEB'; this.ctx.fillRect(0,0,800,600);
+                this.ctx.save(); this.ctx.translate(-this.cam.x, -this.cam.y);
+                
+                let startX = Math.max(0, Math.floor(this.cam.x / this.tileSize));
+                let endX = Math.min(this.cols, Math.ceil((this.cam.x + 800) / this.tileSize));
+                let startY = Math.max(0, Math.floor(this.cam.y / this.tileSize));
+                let endY = Math.min(this.rows, Math.ceil((this.cam.y + 600) / this.tileSize));
 
-                let fov = 300;
-                let camHeight = 150; 
-                let horizon = 200; 
-                let projected = [];
-
-                // Kamera a pálya közepén halad
-                let currentSeg = this.segments.find(s => s.z > this.posZ) || this.segments[0];
-                let camX = currentSeg.x;
-
-                // 3D -> 2D
-                for(let s of this.segments) {
-                    let dz = s.z - this.posZ;
-                    if (dz < 1) continue;
-                    let scale = fov / dz;
-                    let slopeDrop = dz * 0.2; 
-                    
-                    let px = 400 + (s.x - camX) * scale;
-                    let py = horizon + (camHeight + slopeDrop) * scale; 
-                    
-                    projected.push({ ...s, px: px, py: py, scale: scale });
-                }
-
-                // Pálya rajzolása hátulról előre
-                for(let i=projected.length-2; i>=0; i--) {
-                    let p1 = projected[i], p2 = projected[i+1];
-                    let w1 = (p1.w/2) * p1.scale, w2 = (p2.w/2) * p2.scale;
-
-                    // Padló
-                    this.ctx.fillStyle = (Math.floor(p1.z / 100) % 2 === 0) ? '#08081a' : '#11112b';
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(p1.px - w1, p1.py); this.ctx.lineTo(p1.px + w1, p1.py);
-                    this.ctx.lineTo(p2.px + w2, p2.py); this.ctx.lineTo(p2.px - w2, p2.py);
-                    this.ctx.fill();
-
-                    // Szegély
-                    this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 2;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(p1.px - w1, p1.py); this.ctx.lineTo(p2.px - w2, p2.py);
-                    this.ctx.moveTo(p1.px + w1, p1.py); this.ctx.lineTo(p2.px + w2, p2.py);
-                    this.ctx.stroke();
-
-                    // SÁRGA UGRATÓ RAJZOLÁSA
-                    if (p1.hasRamp) {
-                        this.ctx.fillStyle = '#f1c40f'; 
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(p1.px - w1, p1.py); this.ctx.lineTo(p1.px + w1, p1.py);
-                        // A rámpa a következő szakasznál megemelkedik
-                        this.ctx.lineTo(p2.px + w2, p2.py - 25 * p2.scale); 
-                        this.ctx.lineTo(p2.px - w2, p2.py - 25 * p2.scale);
-                        this.ctx.fill();
-                        this.ctx.strokeStyle = '#f39c12'; this.ctx.stroke();
-                    }
-
-                    // PIROS AKADÁLY RAJZOLÁSA
-                    if (p1.hasObs) {
-                        let obsW = 40 * p1.scale, obsH = 40 * p1.scale;
-                        let obsPx = p1.px + (p1.obsX * p1.scale);
-                        let obsPy = p1.py - obsH; 
-                        
-                        this.ctx.fillStyle = '#ff0055'; this.ctx.fillRect(obsPx - obsW/2, obsPy, obsW, obsH);
-                        this.ctx.strokeStyle = '#fff'; this.ctx.strokeRect(obsPx - obsW/2, obsPy, obsW, obsH);
+                for(let x = startX; x < endX; x++) {
+                    for(let y = startY; y < endY; y++) {
+                        let b = this.map[x][y];
+                        if(b !== 0) {
+                            this.ctx.fillStyle = this.colors[b];
+                            this.ctx.fillRect(x*this.tileSize, y*this.tileSize, this.tileSize+1, this.tileSize+1);
+                            this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                            this.ctx.strokeRect(x*this.tileSize, y*this.tileSize, this.tileSize, this.tileSize);
+                            if (b === 1) {
+                                this.ctx.fillStyle = '#81C784';
+                                this.ctx.fillRect(x*this.tileSize, y*this.tileSize, this.tileSize, 6);
+                            }
+                        }
                     }
                 }
 
-                // GOLYÓ RAJZOLÁSA (Mindig 200 egységgel a kamera előtt)
-                let ballVisualDz = 200; 
-                let ballScale = fov / ballVisualDz; // Fov 300 / 200 = 1.5
-                let ballPx = 400 + (this.playerOffset * ballScale);
-                
-                // Golyó Y pozíciójának kiszámítása (Pályamagasság mínusz ugrásmagasság)
-                let trackPyAtBall = horizon + (camHeight + ballVisualDz * 0.2) * ballScale;
-                let ballPy = trackPyAtBall - 20 - (this.playerJumpHeight * ballScale) + this.fallOffset;
+                this.ctx.fillStyle = '#ff0055'; this.ctx.fillRect(this.p.x, this.p.y, this.p.w, this.p.h);
+                this.ctx.fillStyle = '#fff'; this.ctx.fillRect(this.p.x + (this.p.vx > 0 ? 12 : 4), this.p.y + 6, 4, 4);
 
-                this.ctx.fillStyle = '#39ff14'; // Neon Zöld golyó
-                this.ctx.beginPath(); this.ctx.arc(ballPx, ballPy, 20, 0, Math.PI*2); this.ctx.fill();
+                let wx = this.input.mouse.x + this.cam.x; let wy = this.input.mouse.y + this.cam.y;
+                let tx = Math.floor(wx / this.tileSize); let ty = Math.floor(wy / this.tileSize);
                 
-                // Forgás
-                this.ctx.strokeStyle = '#050505'; this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                let roll = (this.posZ % 150) / 150 * Math.PI;
-                this.ctx.ellipse(ballPx, ballPy, 20, 5 + 15*Math.abs(Math.sin(roll)), 0, 0, Math.PI*2);
-                this.ctx.stroke();
+                if(Math.hypot(wx - (this.p.x+this.p.w/2), wy - (this.p.y+this.p.h/2)) < 180) {
+                    this.ctx.strokeStyle = '#fff'; this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(tx*this.tileSize, ty*this.tileSize, this.tileSize, this.tileSize);
+                }
+
+                this.ctx.restore();
+
+                this.ctx.fillStyle = 'rgba(0,0,0,0.6)'; this.ctx.fillRect(290, 530, 220, 60);
+                for(let i=1; i<=5; i++) {
+                    let bx = 300 + (i-1)*40;
+                    this.ctx.fillStyle = this.colors[i]; this.ctx.fillRect(bx, 545, 32, 32);
+                    if (i === 1) { this.ctx.fillStyle = '#81C784'; this.ctx.fillRect(bx, 545, 32, 6); } 
+                    if(this.selectedBlock === i) {
+                        this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 3;
+                        this.ctx.strokeRect(bx, 545, 32, 32);
+                    }
+                }
+                this.ctx.fillStyle = '#fff'; this.ctx.font = '12px Tahoma'; this.ctx.textAlign = 'center';
+                this.ctx.fillText('HOTBAR (1-5 gomb vagy érintés)', 400, 520);
+                this.ctx.textAlign = 'left';
+            }
+            getScore() { return 0; }
+        }
+
+        // ==========================================
+        // NEON ROYALE (3D FORTNITE STYLE)
+        // ==========================================
+        class RoyaleGame {
+            constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
+            
+            reset() {
+                this.p = { x: 0, y: 0, z: 0, speed: 300, hp: 100, angle: 0 };
+                this.cam = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0.3 };
+                this.zone = { x: 0, z: 0, r: 2500, shrinkRate: 12 };
+                this.bullets = []; this.enemies = []; this.particles = []; this.grass = []; this.buildings = [];
+                this.shootCooldown = 0; this.score = 0; this.timer = 0; this.isAlive = true;
+
+                for(let i=0; i<300; i++) {
+                    this.grass.push({ x: (Math.random()-0.5)*6000, z: (Math.random()-0.5)*6000, r: 20 + Math.random()*40, color: (Math.random() > 0.5 ? '#388E3C' : '#2E8B57') });
+                }
+                for(let i=0; i<60; i++) {
+                    let bx = (Math.random()-0.5)*5000; let bz = (Math.random()-0.5)*5000;
+                    if (Math.abs(bx) < 300 && Math.abs(bz) < 300) continue; 
+                    this.buildings.push({ x: bx, z: bz, r: 50 + Math.random()*80, h: 150 + Math.random()*250, color: (Math.random() > 0.5 ? '#2c3e50' : '#34495e'), neon: (Math.random() > 0.5 ? '#00e5ff' : '#ff0055') });
+                }
+            }
+
+            project(x, y, z) {
+                let dx = x - this.cam.x; let dy = y - this.cam.y; let dz = z - this.cam.z;
+                let cosY = Math.cos(this.cam.yaw); let sinY = Math.sin(this.cam.yaw);
+                let x1 = dx * cosY - dz * sinY; let z1 = dx * sinY + dz * cosY;
+                let cosP = Math.cos(this.cam.pitch); let sinP = Math.sin(this.cam.pitch);
+                let y2 = dy * cosP - z1 * sinP; let z2 = dy * sinP + z1 * cosP;
+
+                if (z2 < 10) return null; 
+                let fov = 400; let scale = fov / z2;
+                let px = 400 + x1 * scale; let py = 300 - y2 * scale; 
+                return { px, py, scale, dz: z2 };
+            }
+
+            update(dt) {
+                if(!this.isAlive) return;
+                this.timer += dt; this.score += dt * 5;
+                
+                if (document.pointerLockElement || this.input.movementX !== 0) {
+                    this.cam.yaw += this.input.movementX * -0.003; 
+                    this.cam.pitch += this.input.movementY * 0.003; 
+                    this.cam.pitch = Math.max(-0.2, Math.min(1.0, this.cam.pitch));
+                    this.input.movementX = 0; this.input.movementY = 0;
+                } else {
+                    if(this.input.isDown('q')) this.cam.yaw += 2.5 * dt;
+                    if(this.input.isDown('e')) this.cam.yaw -= 2.5 * dt;
+                }
+
+                this.p.angle = this.cam.yaw; 
+
+                let moveX = 0, moveZ = 0;
+                if(this.input.isDown('left')) moveX -= 1;
+                if(this.input.isDown('right')) moveX += 1;
+                if(this.input.isDown('up')) moveZ += 1; 
+                if(this.input.isDown('down')) moveZ -= 1; 
+
+                if(moveX !== 0 || moveZ !== 0) {
+                    let len = Math.hypot(moveX, moveZ); moveX /= len; moveZ /= len;
+                    let sinY = Math.sin(this.cam.yaw); let cosY = Math.cos(this.cam.yaw);
+                    let wdx = moveX * cosY + moveZ * sinY; let wdz = -moveX * sinY + moveZ * cosY;
+
+                    let nextX = this.p.x + wdx * this.p.speed * dt;
+                    let nextZ = this.p.z + wdz * this.p.speed * dt;
+
+                    let hitBuilding = false;
+                    for(let b of this.buildings) {
+                        if (Math.hypot(nextX - b.x, nextZ - b.z) < b.r + 15) { hitBuilding = true; break; }
+                    }
+                    if (!hitBuilding) { this.p.x = nextX; this.p.z = nextZ; }
+                }
+
+                let camDist = 280;
+                this.cam.x = this.p.x - Math.sin(this.cam.yaw) * Math.cos(this.cam.pitch) * camDist;
+                this.cam.y = this.p.y + 120 + Math.sin(this.cam.pitch) * camDist;
+                this.cam.z = this.p.z - Math.cos(this.cam.yaw) * Math.cos(this.cam.pitch) * camDist;
+
+                if(this.shootCooldown > 0) this.shootCooldown -= dt;
+                if(this.input.isDown('action') && this.shootCooldown <= 0) {
+                    let vx = Math.sin(this.cam.yaw) * Math.cos(this.cam.pitch);
+                    let vy = -Math.sin(this.cam.pitch);
+                    let vz = Math.cos(this.cam.yaw) * Math.cos(this.cam.pitch);
+                    this.bullets.push({ x: this.p.x, y: 50, z: this.p.z, vx: vx * 1600, vy: vy * 1600, vz: vz * 1600, life: 1.5 });
+                    this.shootCooldown = 0.15; 
+                }
+
+                this.distToZone = Math.hypot(this.p.x - this.zone.x, this.p.z - this.zone.z);
+                if (this.distToZone > this.zone.r) this.p.hp -= 15 * dt; 
+                if (this.zone.r > 150) this.zone.r -= this.zone.shrinkRate * dt;
+                if (this.p.hp <= 0) this.isAlive = false;
+
+                for(let i=this.bullets.length-1; i>=0; i--) {
+                    let b = this.bullets[i]; 
+                    b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt; b.life -= dt;
+                    let hitBuilding = false;
+                    for(let bl of this.buildings) {
+                        if (Math.hypot(b.x - bl.x, b.z - bl.z) < bl.r) { hitBuilding = true; break; }
+                    }
+                    if(hitBuilding || b.y < 0 || b.life <= 0) {
+                        if (hitBuilding) { for(let p=0; p<4; p++) this.particles.push({x: b.x, y: b.y, z: b.z, vx: (Math.random()-0.5)*200, vy: 50+Math.random()*100, vz: (Math.random()-0.5)*200, life: 0.2}); }
+                        this.bullets.splice(i, 1); 
+                    }
+                }
+
+                if (Math.random() < 0.02 + (this.timer / 3000)) {
+                    let angle = Math.random() * Math.PI * 2;
+                    let spawnR = this.zone.r * (0.8 + Math.random() * 0.4);
+                    this.enemies.push({ x: this.zone.x + Math.cos(angle)*spawnR, y: 0, z: this.zone.z + Math.sin(angle)*spawnR, hp: 40, speed: 90 + Math.random()*60 });
+                }
+
+                for(let i=this.enemies.length-1; i>=0; i--) {
+                    let e = this.enemies[i];
+                    let ex = this.p.x - e.x, ez = this.p.z - e.z;
+                    let eLen = Math.hypot(ex, ez);
+                    
+                    let eNextX = e.x + (ex/eLen) * e.speed * dt; let eNextZ = e.z + (ez/eLen) * e.speed * dt;
+                    let hitBuilding = false;
+                    for(let b of this.buildings) {
+                        if (Math.hypot(eNextX - b.x, eNextZ - b.z) < b.r + 10) { hitBuilding = true; break; }
+                    }
+                    if (!hitBuilding) { e.x = eNextX; e.z = eNextZ; }
+
+                    if (eLen < 40) { this.p.hp -= 20 * dt; }
+
+                    for(let j=this.bullets.length-1; j>=0; j--) {
+                        let b = this.bullets[j];
+                        if (Math.hypot(b.x - e.x, b.z - e.z) < 30 && b.y < 80) {
+                            e.hp -= 40; this.bullets.splice(j, 1);
+                            for(let p=0; p<8; p++) this.particles.push({x: e.x, y: 40, z: e.z, vx: (Math.random()-0.5)*300, vy: 100+Math.random()*200, vz: (Math.random()-0.5)*300, life: 0.4});
+                        }
+                    }
+                    if(e.hp <= 0) { this.enemies.splice(i, 1); this.score += 100; }
+                }
+
+                for(let i=this.particles.length-1; i>=0; i--) {
+                    let p = this.particles[i]; 
+                    p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vy -= 800 * dt; 
+                    if(p.y < 0) p.y = 0;
+                    p.life -= dt;
+                    if(p.life <= 0) this.particles.splice(i, 1);
+                }
+            }
+
+            drawCylinder(ctx, px, py, scale, radius, height, color) {
+                let w = radius * 2 * scale; let h = height * scale;
+                ctx.fillStyle = color; ctx.fillRect(px - w/2, py - h, w, h);
+                ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(px, py - h, w/2, w/4, 0, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(px - w/2, py - h, w, h);
+            }
+
+            draw() {
+                let isOutsideZone = (this.distToZone > this.zone.r);
+                let horizonY = 300 + Math.sin(this.cam.pitch) * 400;
+                
+                let skyGrad = this.ctx.createLinearGradient(0,0,0,horizonY);
+                skyGrad.addColorStop(0, isOutsideZone ? '#4B0082' : '#1E90FF'); 
+                skyGrad.addColorStop(1, isOutsideZone ? '#8A2BE2' : '#87CEEB'); 
+                this.ctx.fillStyle = skyGrad; this.ctx.fillRect(0,0,800,horizonY);
+
+                if (!isOutsideZone) {
+                    this.ctx.fillStyle = '#FFD700'; this.ctx.shadowColor = '#FFA500'; this.ctx.shadowBlur = 20;
+                    this.ctx.beginPath(); this.ctx.arc(400, horizonY - 150, 40, 0, Math.PI*2); this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
+                }
+
+                let groundGrad = this.ctx.createLinearGradient(0,horizonY,0,600);
+                groundGrad.addColorStop(0, isOutsideZone ? '#2d1a3a' : '#2E8B57'); 
+                groundGrad.addColorStop(1, isOutsideZone ? '#3e1547' : '#4CAF50'); 
+                this.ctx.fillStyle = groundGrad; this.ctx.fillRect(0, horizonY, 800, 600 - horizonY);
+
+                let drawables = [];
+                for(let g of this.grass) { let p = this.project(g.x, 0, g.z); if(p) drawables.push({ type: 'grass', ...p, r: g.r, color: g.color }); }
+                for(let b of this.buildings) { let p = this.project(b.x, 0, b.z); if(p) drawables.push({ type: 'building', ...p, b: b }); }
+                let pProj = this.project(this.p.x, 0, this.p.z); if(pProj) drawables.push({ type: 'player', ...pProj });
+                for(let e of this.enemies) { let ep = this.project(e.x, 0, e.z); if(ep) drawables.push({ type: 'enemy', ...ep }); }
+                for(let b of this.bullets) { let bp = this.project(b.x, b.y, b.z); if(bp) drawables.push({ type: 'bullet', ...bp }); }
+                for(let p of this.particles) { let pp = this.project(p.x, p.y, p.z); if(pp) drawables.push({ type: 'particle', ...pp, life: p.life }); }
+
+                drawables.sort((a,b) => b.dz - a.dz);
+
+                this.ctx.lineWidth = 3; this.ctx.fillStyle = 'rgba(138, 43, 226, 0.3)';
+                for(let i=0; i<60; i++) {
+                    let a = (i/60) * Math.PI * 2; let wx = this.zone.x + Math.cos(a) * this.zone.r; let wz = this.zone.z + Math.sin(a) * this.zone.r;
+                    let p1 = this.project(wx, 0, wz); let p2 = this.project(wx, 2000, wz); 
+                    if (p1 && p2 && p1.dz > 0) {
+                        this.ctx.beginPath(); this.ctx.moveTo(p1.px - 3*p1.scale, p1.py); this.ctx.lineTo(p1.px + 3*p1.scale, p1.py);
+                        this.ctx.lineTo(p2.px + 3*p2.scale, p2.py); this.ctx.lineTo(p2.px - 3*p2.scale, p2.py); this.ctx.fill();
+                        this.ctx.fillStyle = '#ff00ff'; this.ctx.beginPath(); this.ctx.arc(p1.px, p1.py, 6*p1.scale, 0, Math.PI*2); this.ctx.fill();
+                        this.ctx.fillStyle = 'rgba(138, 43, 226, 0.3)';
+                    }
+                }
+
+                for(let item of drawables) {
+                    let s = item.scale; let px = item.px; let py = item.py;
+                    if (item.type === 'grass') {
+                        this.ctx.fillStyle = item.color; this.ctx.beginPath(); this.ctx.ellipse(px, py, item.r * s, item.r * 0.3 * s, 0, 0, Math.PI*2); this.ctx.fill();
+                    }
+                    else if (item.type === 'building') {
+                        let b = item.b;
+                        this.ctx.fillStyle = 'rgba(0,0,0,0.5)'; this.ctx.beginPath(); this.ctx.ellipse(px, py, b.r*s, (b.r/2)*s, 0, 0, Math.PI*2); this.ctx.fill();
+                        this.drawCylinder(this.ctx, px, py, s, b.r, b.h, b.color);
+                        this.ctx.fillStyle = b.neon; this.ctx.fillRect(px - b.r*s, py - b.h*s*0.8, b.r*2*s, 6*s);
+                    }
+                    else if (item.type === 'player' || item.type === 'enemy') {
+                        this.ctx.fillStyle = 'rgba(0,0,0,0.4)'; this.ctx.beginPath(); this.ctx.ellipse(px, py, 20*s, 8*s, 0, 0, Math.PI*2); this.ctx.fill();
+                        let isPlayer = item.type === 'player';
+                        let skinColor = isPlayer ? '#FFC0CB' : '#7CFC00'; let shirtColor = isPlayer ? '#00e5ff' : '#8B0000';
+                        this.drawCylinder(this.ctx, px - 6*s, py, s, 5, 20, '#191970'); 
+                        this.drawCylinder(this.ctx, px + 6*s, py, s, 5, 20, '#191970'); 
+                        this.drawCylinder(this.ctx, px, py - 20*s, s, 13, 30, shirtColor); 
+                        this.drawCylinder(this.ctx, px, py - 50*s, s, 9, 18, skinColor); 
+                    }
+                    else if (item.type === 'bullet') { this.ctx.fillStyle = '#FFD700'; this.ctx.beginPath(); this.ctx.arc(px, py, 4*s, 0, Math.PI*2); this.ctx.fill(); }
+                    else if (item.type === 'particle') { this.ctx.fillStyle = '#ff0055'; this.ctx.globalAlpha = item.life * 2; this.ctx.fillRect(px, py, 6*s, 6*s); this.ctx.globalAlpha = 1.0; }
+                }
+
+                this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 2; this.ctx.beginPath();
+                this.ctx.moveTo(390, 300); this.ctx.lineTo(410, 300); this.ctx.moveTo(400, 290); this.ctx.lineTo(400, 310); this.ctx.stroke();
+
+                if (isOutsideZone) {
+                    this.ctx.fillStyle = 'rgba(255, 0, 85, 0.3)'; this.ctx.fillRect(0, 0, 800, 600);
+                    this.ctx.fillStyle = '#fff'; this.ctx.font = 'bold 35px Tahoma'; this.ctx.textAlign = 'center';
+                    this.ctx.shadowColor = '#000'; this.ctx.shadowBlur = 10;
+                    this.ctx.fillText('⚠️ VIHARBAN VAGY! ⚠️', 400, 150);
+                    this.ctx.textAlign = 'left'; this.ctx.shadowBlur = 0;
+                }
+
+                this.ctx.fillStyle = '#333'; this.ctx.fillRect(20, 60, 200, 20);
+                this.ctx.fillStyle = this.p.hp > 30 ? '#39ff14' : '#ff0055'; this.ctx.fillRect(20, 60, Math.max(0, this.p.hp) * 2, 20);
             }
             getScore() { return Math.floor(this.score); }
         }
 
-        // --- GAME 2: MOTORCYCLE RACING ---
+        // ==========================================
+        // SLOPE 3D, MOTO, CAR, DASH
+        // ==========================================
+        class SlopeGame {
+            constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
+            reset() { this.speed = 500; this.posZ = 0; this.score = 0; this.isAlive = true; this.playerOffset = 0; this.playerVelocity = 0; this.playerJumpHeight = 0; this.playerJumpVy = 0; this.segments = []; this.trackX = 0; this.curve = 0; this.targetCurve = 0; this.fallOffset = 0; this.lastObsZ = 0; this.lastRampZ = 0; for(let i=0; i<60; i++) this.addSegment(i * 50); }
+            addSegment(z) { if (z % 1000 === 0) this.targetCurve = (Math.random() - 0.5) * 6; this.curve += (this.targetCurve - this.curve) * 0.05; this.trackX += this.curve * 5; let hasObs = false, hasRamp = false, obsX = 0; if (z > 1000) { if (z - this.lastObsZ > 1200 && Math.random() < 0.3) { hasObs = true; obsX = (Math.random() - 0.5) * 120; this.lastObsZ = z; } else if (z - this.lastRampZ > 1500 && Math.random() < 0.4) { hasRamp = true; this.lastRampZ = z; } } this.segments.push({ z: z, x: this.trackX, w: 240, curve: this.curve, hasObs: hasObs, obsX: obsX, hasRamp: hasRamp }); }
+            update(dt) { if(!this.isAlive) { this.fallOffset += 1200 * dt; return; } this.score += 10 * dt; this.speed += 5 * dt; this.posZ += this.speed * dt; let ballZ = this.posZ + 200; if(this.input.isDown('left') || this.input.isDown('q')) this.playerVelocity -= 3500 * dt; if(this.input.isDown('right') || this.input.isDown('e')) this.playerVelocity += 3500 * dt; this.playerVelocity *= 0.88; this.playerOffset += this.playerVelocity * dt; if (this.playerJumpHeight > 0 || this.playerJumpVy !== 0) { this.playerJumpVy -= 2500 * dt; this.playerJumpHeight += this.playerJumpVy * dt; if (this.playerJumpHeight < 0) { this.playerJumpHeight = 0; this.playerJumpVy = 0; } } while (this.segments.length > 0 && this.segments[0].z < this.posZ - 50) { this.segments.shift(); this.addSegment(this.segments[this.segments.length - 1].z + 50); } let currentSeg = this.segments.find(s => s.z > ballZ - 50); if (currentSeg) { if (this.playerJumpHeight === 0) this.playerVelocity -= currentSeg.curve * 120 * dt; if (Math.abs(this.playerOffset) > currentSeg.w / 2 + 10 && this.playerJumpHeight === 0) this.isAlive = false; if (currentSeg.hasRamp && this.playerJumpHeight === 0) { let distToRamp = currentSeg.z - ballZ; if (distToRamp > -20 && distToRamp < 40) this.playerJumpVy = 900; } if (currentSeg.hasObs) { let distToObs = currentSeg.z - ballZ; if (distToObs > -20 && distToObs < 40 && this.playerJumpHeight < 40) { if (Math.abs(this.playerOffset - currentSeg.obsX) < 35) this.isAlive = false; } } } }
+            draw() { this.ctx.fillStyle = '#020010'; this.ctx.fillRect(0,0,800,600); let fov = 300, camHeight = 150, horizon = 200, projected = []; let currentSeg = this.segments.find(s => s.z > this.posZ) || this.segments[0]; let camX = currentSeg.x; for(let s of this.segments) { let dz = s.z - this.posZ; if (dz < 1) continue; let scale = fov / dz, slopeDrop = dz * 0.2; let px = 400 + (s.x - camX) * scale, py = horizon + (camHeight + slopeDrop) * scale; projected.push({ ...s, px: px, py: py, scale: scale }); } for(let i=projected.length-2; i>=0; i--) { let p1 = projected[i], p2 = projected[i+1], w1 = (p1.w/2) * p1.scale, w2 = (p2.w/2) * p2.scale; this.ctx.fillStyle = (Math.floor(p1.z / 100) % 2 === 0) ? '#08081a' : '#11112b'; this.ctx.beginPath(); this.ctx.moveTo(p1.px - w1, p1.py); this.ctx.lineTo(p1.px + w1, p1.py); this.ctx.lineTo(p2.px + w2, p2.py); this.ctx.lineTo(p2.px - w2, p2.py); this.ctx.fill(); this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 2; this.ctx.beginPath(); this.ctx.moveTo(p1.px - w1, p1.py); this.ctx.lineTo(p2.px - w2, p2.py); this.ctx.moveTo(p1.px + w1, p1.py); this.ctx.lineTo(p2.px + w2, p2.py); this.ctx.stroke(); if (p1.hasRamp) { this.ctx.fillStyle = '#f1c40f'; this.ctx.beginPath(); this.ctx.moveTo(p1.px - w1, p1.py); this.ctx.lineTo(p1.px + w1, p1.py); this.ctx.lineTo(p2.px + w2, p2.py - 30 * p2.scale); this.ctx.lineTo(p2.px - w2, p2.py - 30 * p2.scale); this.ctx.fill(); } if (p1.hasObs) { let obsW = 40 * p1.scale, obsH = 40 * p1.scale, obsPx = p1.px + (p1.obsX * p1.scale), obsPy = p1.py - obsH; this.ctx.fillStyle = '#ff0055'; this.ctx.fillRect(obsPx - obsW/2, obsPy, obsW, obsH); this.ctx.strokeStyle = '#fff'; this.ctx.strokeRect(obsPx - obsW/2, obsPy, obsW, obsH); } } let ballVisualDz = 200, ballScale = fov / ballVisualDz; let ballPx = 400 + (this.playerOffset * ballScale); let trackPyAtBall = horizon + (camHeight + ballVisualDz * 0.2) * ballScale; let ballPy = trackPyAtBall - 20 - (this.playerJumpHeight * ballScale) + this.fallOffset; this.ctx.fillStyle = '#39ff14'; this.ctx.beginPath(); this.ctx.arc(ballPx, ballPy, 20, 0, Math.PI*2); this.ctx.fill(); this.ctx.strokeStyle = '#050505'; this.ctx.lineWidth = 2; this.ctx.beginPath(); let roll = (this.posZ % 150) / 150 * Math.PI; this.ctx.ellipse(ballPx, ballPy, 20, 5 + 15*Math.abs(Math.sin(roll)), 0, 0, Math.PI*2); this.ctx.stroke(); }
+            getScore() { return Math.floor(this.score); }
+        }
         class MotoGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
-            reset() {
-                this.lanes = [400, 480, 560]; this.player = { laneIdx: 1, x: 150, y: this.lanes[1] };
-                this.enemies = []; this.speed = 400; this.bgOffset = 0; this.score = 0; this.spawnTimer = 0; this.isAlive = true;
-            }
-            update(dt) {
-                if(!this.isAlive) return;
-                this.score += 10 * dt; this.speed += 2 * dt; 
-                if(this.input.isDown('ArrowRight') && this.player.x < 400) this.player.x += 200 * dt;
-                if(this.input.isDown('ArrowLeft') && this.player.x > 50) this.player.x -= 200 * dt;
-                if(this.input.consume('ArrowUp') && this.player.laneIdx > 0) this.player.laneIdx--;
-                if(this.input.consume('ArrowDown') && this.player.laneIdx < 2) this.player.laneIdx++;
-                this.player.y += (this.lanes[this.player.laneIdx] - this.player.y) * 15 * dt;
-                this.bgOffset = (this.bgOffset + this.speed * dt) % 800;
-
-                this.spawnTimer += dt;
-                if(this.spawnTimer > 2.0 - (this.speed/2500)) {
-                    let l = Math.floor(Math.random() * 3), canSpawn = true;
-                    for(let e of this.enemies) { if(e.laneIdx === l && e.x > 550) { canSpawn = false; break; } }
-                    if(canSpawn) { this.enemies.push({ laneIdx: l, x: 850, y: this.lanes[l], speed: 200 }); this.spawnTimer = 0; }
-                }
-
-                for(let i = this.enemies.length-1; i>=0; i--) {
-                    let e = this.enemies[i]; e.x -= (this.speed - e.speed) * dt; 
-                    if(e.x < -100) { this.enemies.splice(i, 1); continue; }
-                    if(this.player.laneIdx === e.laneIdx && Math.abs(this.player.x - e.x) < 55) this.isAlive = false;
-                }
-            }
-            draw() {
-                this.ctx.fillStyle = '#2c3e50'; this.ctx.fillRect(0,0,800,300);
-                this.ctx.fillStyle = '#34495e';
-                for(let i=0; i<3; i++) {
-                    this.ctx.beginPath(); this.ctx.moveTo((i*400) - (this.bgOffset*0.2)%400, 300);
-                    this.ctx.lineTo((i*400)+200 - (this.bgOffset*0.2)%400, 100); this.ctx.lineTo((i*400)+400 - (this.bgOffset*0.2)%400, 300); this.ctx.fill();
-                }
-                this.ctx.fillStyle = '#555'; this.ctx.fillRect(0, 300, 800, 300);
-                this.ctx.fillStyle = '#fff';
-                for(let i=0; i<10; i++) {
-                    let lineX = (i*100) - (this.bgOffset % 100);
-                    this.ctx.fillRect(lineX, 440, 50, 4); this.ctx.fillRect(lineX, 520, 50, 4);
-                }
-                let entities = [ { ...this.player, isPlayer: true, color: '#3498db' } ];
-                this.enemies.forEach(e => entities.push({ ...e, isPlayer: false, color: '#e74c3c' }));
-                entities.sort((a,b) => a.y - b.y);
-                entities.forEach(ent => { let scale = 0.8 + (ent.y - 400) / 400; drawMotoSide(this.ctx, ent.x, ent.y, scale, ent.color); });
-            }
+            reset() { this.lanes = [400, 480, 560]; this.player = { laneIdx: 1, x: 150, y: this.lanes[1] }; this.enemies = []; this.speed = 400; this.bgOffset = 0; this.score = 0; this.spawnTimer = 0; this.isAlive = true; }
+            update(dt) { if(!this.isAlive) return; this.score += 10 * dt; this.speed += 2 * dt; if(this.input.isDown('right') && this.player.x < 400) this.player.x += 200 * dt; if(this.input.isDown('left') && this.player.x > 50) this.player.x -= 200 * dt; if(this.input.consume('up') && this.player.laneIdx > 0) this.player.laneIdx--; if(this.input.consume('down') && this.player.laneIdx < 2) this.player.laneIdx++; this.player.y += (this.lanes[this.player.laneIdx] - this.player.y) * 15 * dt; this.bgOffset = (this.bgOffset + this.speed * dt) % 800; this.spawnTimer += dt; if(this.spawnTimer > 2.0 - (this.speed/2500)) { let l = Math.floor(Math.random() * 3), canSpawn = true; for(let e of this.enemies) { if(e.laneIdx === l && e.x > 550) { canSpawn = false; break; } } if(canSpawn) { this.enemies.push({ laneIdx: l, x: 850, y: this.lanes[l], speed: 200 }); this.spawnTimer = 0; } } for(let i = this.enemies.length-1; i>=0; i--) { let e = this.enemies[i]; e.x -= (this.speed - e.speed) * dt; if(e.x < -100) { this.enemies.splice(i, 1); continue; } if(this.player.laneIdx === e.laneIdx && Math.abs(this.player.x - e.x) < 55) this.isAlive = false; } }
+            draw() { this.ctx.fillStyle = '#2c3e50'; this.ctx.fillRect(0,0,800,300); this.ctx.fillStyle = '#34495e'; for(let i=0; i<3; i++) { this.ctx.beginPath(); this.ctx.moveTo((i*400) - (this.bgOffset*0.2)%400, 300); this.ctx.lineTo((i*400)+200 - (this.bgOffset*0.2)%400, 100); this.ctx.lineTo((i*400)+400 - (this.bgOffset*0.2)%400, 300); this.ctx.fill(); } this.ctx.fillStyle = '#555'; this.ctx.fillRect(0, 300, 800, 300); this.ctx.fillStyle = '#fff'; for(let i=0; i<10; i++) { let lineX = (i*100) - (this.bgOffset % 100); this.ctx.fillRect(lineX, 440, 50, 4); this.ctx.fillRect(lineX, 520, 50, 4); } let entities = [ { ...this.player, isPlayer: true, color: '#3498db' } ]; this.enemies.forEach(e => entities.push({ ...e, isPlayer: false, color: '#e74c3c' })); entities.sort((a,b) => a.y - b.y); entities.forEach(ent => { let scale = 0.8 + (ent.y - 400) / 400; drawMotoSide(this.ctx, ent.x, ent.y, scale, ent.color); }); }
             getScore() { return Math.floor(this.score); }
         }
-
-        // --- GAME 3: CAR RACING ---
         class CarGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
-            reset() {
-                this.speed = 150; this.posZ = 0; this.playerX = 0; this.score = 0; this.isAlive = true; this.trackCurve = 0;
-                this.enemies = []; this.spawnTimer = 0;
-            }
-            update(dt) {
-                if(!this.isAlive) return;
-                this.score += 5 * dt; this.speed += 2 * dt; this.posZ += this.speed * dt;
-                this.trackCurve = Math.sin(this.posZ / 600) * 1.5;
-
-                if(this.input.isDown('ArrowLeft') && this.playerX > -1.3) this.playerX -= 1.8 * dt;
-                if(this.input.isDown('ArrowRight') && this.playerX < 1.3) this.playerX += 1.8 * dt;
-
-                this.spawnTimer += dt;
-                if(this.spawnTimer > 1.2) {
-                    let lane = Math.floor(Math.random() * 3) - 1;
-                    this.enemies.push({ x: lane * 0.8, z: this.posZ + 600, speed: this.speed * 0.6 });
-                    this.spawnTimer = 0;
-                }
-
-                for(let i = this.enemies.length-1; i>=0; i--) {
-                    let e = this.enemies[i]; e.z += e.speed * dt;
-                    if(e.z < this.posZ - 100) { this.enemies.splice(i, 1); continue; }
-                    let relZ = e.z - this.posZ; 
-                    let pLeft = this.playerX - 0.35, pRight = this.playerX + 0.35, pBack = -20, pFront = 20;
-                    let eLeft = e.x - 0.35, eRight = e.x + 0.35, eBack = relZ - 15, eFront = relZ + 15;
-                    if((pRight > eLeft) && (pLeft < eRight) && (pFront > eBack) && (pBack < eFront)) this.isAlive = false; 
-                }
-            }
-            draw() {
-                let w = this.canvas.width, h = this.canvas.height, horizon = h / 2 - 50;
-                this.ctx.fillStyle = '#87CEEB'; this.ctx.fillRect(0, 0, w, horizon);
-                this.ctx.fillStyle = '#f1c40f';
-                let sunX = w/2 - (this.trackCurve * 120); 
-                this.ctx.beginPath(); this.ctx.arc(sunX, horizon - 40, 30, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.fillStyle = '#2ecc71'; this.ctx.fillRect(0, horizon, w, h - horizon);
-
-                let drawDist = 300, segments = 30;
-                for(let i = segments; i > 0; i--) {
-                    let z1 = i * (drawDist / segments), z2 = (i-1) * (drawDist / segments);
-                    let colorIdx = Math.floor((this.posZ + z1) / 20) % 2;
-                    let scale1 = 150 / z1, scale2 = 150 / (z2 === 0 ? 0.1 : z2);
-                    let y1 = horizon + 50 * scale1, y2 = horizon + 50 * scale2;
-                    let roadW1 = 150 * scale1, roadW2 = 150 * scale2;
-                    let curveX1 = this.trackCurve * Math.pow(z1 / drawDist, 2) * 150;
-                    let curveX2 = this.trackCurve * Math.pow(z2 / drawDist, 2) * 150;
-                    let cx1 = w/2 - (this.playerX * roadW1) + curveX1;
-                    let cx2 = w/2 - (this.playerX * roadW2) + curveX2;
-
-                    this.ctx.fillStyle = colorIdx === 0 ? '#fff' : '#e74c3c'; this.ctx.beginPath();
-                    this.ctx.moveTo(cx1 - roadW1*1.1, y1); this.ctx.lineTo(cx1 + roadW1*1.1, y1);
-                    this.ctx.lineTo(cx2 + roadW2*1.1, y2); this.ctx.lineTo(cx2 - roadW2*1.1, y2); this.ctx.fill();
-                    this.ctx.fillStyle = colorIdx === 0 ? '#555' : '#444'; this.ctx.beginPath();
-                    this.ctx.moveTo(cx1 - roadW1, y1); this.ctx.lineTo(cx1 + roadW1, y1);
-                    this.ctx.lineTo(cx2 + roadW2, y2); this.ctx.lineTo(cx2 - roadW2, y2); this.ctx.fill();
-                }
-
-                this.enemies.sort((a,b) => b.z - a.z);
-                for(let e of this.enemies) {
-                    let dz = e.z - this.posZ; if(dz < -20) continue; 
-                    let scale = 150 / (dz < 1 ? 1 : dz), ey = horizon + 50 * scale;
-                    let eCurveX = this.trackCurve * Math.pow(dz / drawDist, 2) * 150;
-                    let ex = w/2 + ((e.x - this.playerX) * 150 * scale) + eCurveX;
-                    drawCarRear(this.ctx, ex, ey, scale * 1.5, '#f1c40f'); 
-                }
-                drawCarRear(this.ctx, w/2, h - 50, 2.5, '#e74c3c'); 
-            }
+            reset() { this.speed = 150; this.posZ = 0; this.playerX = 0; this.score = 0; this.isAlive = true; this.trackCurve = 0; this.enemies = []; this.spawnTimer = 0; }
+            update(dt) { if(!this.isAlive) return; this.score += 5 * dt; this.speed += 2 * dt; this.posZ += this.speed * dt; this.trackCurve = Math.sin(this.posZ / 600) * 1.5; if(this.input.isDown('left')) this.playerX -= 1.8 * dt; if(this.input.isDown('right')) this.playerX += 1.8 * dt; this.spawnTimer += dt; if(this.spawnTimer > 1.2) { let lane = Math.floor(Math.random() * 3) - 1; this.enemies.push({ x: lane * 0.8, z: this.posZ + 600, speed: this.speed * 0.6 }); this.spawnTimer = 0; } for(let i = this.enemies.length-1; i>=0; i--) { let e = this.enemies[i]; e.z += e.speed * dt; if(e.z < this.posZ - 100) { this.enemies.splice(i, 1); continue; } let relZ = e.z - this.posZ; let pLeft = this.playerX - 0.35, pRight = this.playerX + 0.35, pBack = -20, pFront = 20; let eLeft = e.x - 0.35, eRight = e.x + 0.35, eBack = relZ - 15, eFront = relZ + 15; if((pRight > eLeft) && (pLeft < eRight) && (pFront > eBack) && (pBack < eFront)) this.isAlive = false; } }
+            draw() { let w = this.canvas.width, h = this.canvas.height, horizon = h / 2 - 50; this.ctx.fillStyle = '#87CEEB'; this.ctx.fillRect(0, 0, w, horizon); this.ctx.fillStyle = '#f1c40f'; let sunX = w/2 - (this.trackCurve * 120); this.ctx.beginPath(); this.ctx.arc(sunX, horizon - 40, 30, 0, Math.PI*2); this.ctx.fill(); this.ctx.fillStyle = '#2ecc71'; this.ctx.fillRect(0, horizon, w, h - horizon); let drawDist = 300, segments = 30; for(let i = segments; i > 0; i--) { let z1 = i * (drawDist / segments), z2 = (i-1) * (drawDist / segments); let colorIdx = Math.floor((this.posZ + z1) / 20) % 2; let scale1 = 150 / z1, scale2 = 150 / (z2 === 0 ? 0.1 : z2); let y1 = horizon + 50 * scale1, y2 = horizon + 50 * scale2; let roadW1 = 150 * scale1, roadW2 = 150 * scale2; let curveX1 = this.trackCurve * Math.pow(z1 / drawDist, 2) * 150; let curveX2 = this.trackCurve * Math.pow(z2 / drawDist, 2) * 150; let cx1 = w/2 - (this.playerX * roadW1) + curveX1; let cx2 = w/2 - (this.playerX * roadW2) + curveX2; this.ctx.fillStyle = colorIdx === 0 ? '#fff' : '#e74c3c'; this.ctx.beginPath(); this.ctx.moveTo(cx1 - roadW1*1.1, y1); this.ctx.lineTo(cx1 + roadW1*1.1, y1); this.ctx.lineTo(cx2 + roadW2*1.1, y2); this.ctx.lineTo(cx2 - roadW2*1.1, y2); this.ctx.fill(); this.ctx.fillStyle = colorIdx === 0 ? '#555' : '#444'; this.ctx.beginPath(); this.ctx.moveTo(cx1 - roadW1, y1); this.ctx.lineTo(cx1 + roadW1, y1); this.ctx.lineTo(cx2 + roadW2, y2); this.ctx.lineTo(cx2 - roadW2, y2); this.ctx.fill(); } this.enemies.sort((a,b) => b.z - a.z); for(let e of this.enemies) { let dz = e.z - this.posZ; if(dz < -20) continue; let scale = 150 / (dz < 1 ? 1 : dz), ey = horizon + 50 * scale; let eCurveX = this.trackCurve * Math.pow(dz / drawDist, 2) * 150; let ex = w/2 + ((e.x - this.playerX) * 150 * scale) + eCurveX; drawCarRear(this.ctx, ex, ey, scale * 1.5, '#f1c40f'); } drawCarRear(this.ctx, w/2, h - 50, 2.5, '#e74c3c'); }
             getScore() { return Math.floor(this.score); }
         }
-
-        // --- GAME 4: GEOMETRY DASH ---
         class DashGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
-            reset() {
-                this.groundY = 500; this.player = { x: 150, y: this.groundY - 40, w: 40, h: 40, vy: 0 };
-                this.gravity = 2500; this.jumpForce = 850; this.obstacles = [];
-                this.score = 0; this.level = 1; this.baseSpeed = 400; this.spawnTimer = 0; this.isAlive = true; this.bgOffset = 0;
-            }
-            update(dt) {
-                if(!this.isAlive) return;
-                this.score += 20 * dt; this.level = Math.min(5, Math.floor(this.score / 500) + 1);
-                let currentSpeed = this.baseSpeed + (this.level * 50);
-
-                let prevY = this.player.y; this.player.vy += this.gravity * dt; this.player.y += this.player.vy * dt;
-                let onGround = false;
-                if(this.player.y >= this.groundY - this.player.h) { this.player.y = this.groundY - this.player.h; this.player.vy = 0; onGround = true; }
-                this.bgOffset = (this.bgOffset + currentSpeed * 0.5 * dt) % 100;
-
-                this.spawnTimer += dt;
-                if(this.spawnTimer > 1.2 - (this.level * 0.1)) {
-                    let rand = Math.random(), obsX = this.canvas.width;
-                    if(rand < 0.3 && this.level >= 2) this.obstacles.push({ type: 'flyblock', x: obsX, y: this.groundY - 100, w: 40, h: 40 });
-                    else if (rand < 0.6 && this.level >= 3) this.obstacles.push({ type: 'platform', x: obsX, y: this.groundY - 90, w: 120, h: 20 });
-                    else this.obstacles.push({ type: 'spike', x: obsX, y: this.groundY - 40, w: 40, h: 40 });
-                    this.spawnTimer = 0;
-                }
-
-                for (let i = this.obstacles.length - 1; i >= 0; i--) {
-                    let o = this.obstacles[i]; o.x -= currentSpeed * dt; if(o.x + o.w < 0) { this.obstacles.splice(i, 1); continue; }
-                    let hitW = o.type === 'spike' ? o.w * 0.6 : o.w, hitH = o.type === 'spike' ? o.h * 0.8 : o.h;
-                    let hitX = o.type === 'spike' ? o.x + (o.w-hitW)/2 : o.x, hitY = o.type === 'spike' ? o.y + (o.h-hitH) : o.y;
-                    let oBox = {x: hitX, y: hitY, w: hitW, h: hitH}, pBox = {x: this.player.x, y: this.player.y, w: this.player.w, h: this.player.h};
-
-                    if(pBox.x < oBox.x + oBox.w && pBox.x + pBox.w > oBox.x && pBox.y < oBox.y + oBox.h && pBox.y + pBox.h > oBox.y) {
-                        if(o.type === 'platform' && this.player.vy >= 0 && prevY + pBox.h <= oBox.y + 10) { this.player.y = oBox.y - pBox.h; this.player.vy = 0; onGround = true; } 
-                        else this.isAlive = false;
-                    }
-                }
-                if(this.input.isDown('Space') && onGround) this.player.vy = -this.jumpForce;
-            }
-            draw() {
-                this.ctx.fillStyle = '#17102e'; this.ctx.fillRect(0,0,800,600);
-                this.ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-                for(let i=0; i<10; i++) { this.ctx.beginPath(); this.ctx.moveTo((i*100) - this.bgOffset, 0); this.ctx.lineTo((i*100) - this.bgOffset, this.groundY); this.ctx.stroke(); }
-                this.ctx.fillStyle = '#0a0a0a'; this.ctx.fillRect(0, this.groundY, 800, 600 - this.groundY);
-                this.ctx.fillStyle = '#00e5ff'; this.ctx.fillRect(0, this.groundY, 800, 3);
-
-                for(let o of this.obstacles) {
-                    if(o.type === 'spike') { this.ctx.fillStyle = '#ff0055'; this.ctx.beginPath(); this.ctx.moveTo(o.x + o.w/2, o.y); this.ctx.lineTo(o.x + o.w, o.y + o.h); this.ctx.lineTo(o.x, o.y + o.h); this.ctx.fill(); } 
-                    else if (o.type === 'flyblock') { this.ctx.fillStyle = '#e67e22'; this.ctx.fillRect(o.x, o.y, o.w, o.h); } 
-                    else if (o.type === 'platform') { this.ctx.fillStyle = '#2ecc71'; this.ctx.fillRect(o.x, o.y, o.w, o.h); this.ctx.fillStyle = 'rgba(0,0,0,0.5)'; this.ctx.fillRect(o.x, o.y + 5, o.w, o.h - 5); }
-                }
-                this.ctx.fillStyle = '#f1c40f'; this.ctx.fillRect(this.player.x, this.player.y, this.player.w, this.player.h);
-                this.ctx.fillStyle = '#f39c12'; this.ctx.fillRect(this.player.x+8, this.player.y+8, this.player.w-16, this.player.h-16);
-            }
+            reset() { this.groundY = 500; this.player = { x: 150, y: this.groundY - 40, w: 40, h: 40, vy: 0 }; this.gravity = 2500; this.jumpForce = 850; this.obstacles = []; this.score = 0; this.level = 1; this.baseSpeed = 400; this.spawnTimer = 0; this.isAlive = true; this.bgOffset = 0; }
+            update(dt) { if(!this.isAlive) return; this.score += 20 * dt; this.level = Math.min(5, Math.floor(this.score / 500) + 1); let currentSpeed = this.baseSpeed + (this.level * 50); let prevY = this.player.y; this.player.vy += this.gravity * dt; this.player.y += this.player.vy * dt; let onGround = false; if(this.player.y >= this.groundY - this.player.h) { this.player.y = this.groundY - this.player.h; this.player.vy = 0; onGround = true; } this.bgOffset = (this.bgOffset + currentSpeed * 0.5 * dt) % 100; this.spawnTimer += dt; if(this.spawnTimer > 1.2 - (this.level * 0.1)) { let rand = Math.random(), obsX = this.canvas.width; if(rand < 0.3 && this.level >= 2) this.obstacles.push({ type: 'flyblock', x: obsX, y: this.groundY - 100, w: 40, h: 40 }); else if (rand < 0.6 && this.level >= 3) this.obstacles.push({ type: 'platform', x: obsX, y: this.groundY - 90, w: 120, h: 20 }); else this.obstacles.push({ type: 'spike', x: obsX, y: this.groundY - 40, w: 40, h: 40 }); this.spawnTimer = 0; } for (let i = this.obstacles.length - 1; i >= 0; i--) { let o = this.obstacles[i]; o.x -= currentSpeed * dt; if(o.x + o.w < 0) { this.obstacles.splice(i, 1); continue; } let hitW = o.type === 'spike' ? o.w * 0.6 : o.w, hitH = o.type === 'spike' ? o.h * 0.8 : o.h; let hitX = o.type === 'spike' ? o.x + (o.w-hitW)/2 : o.x, hitY = o.type === 'spike' ? o.y + (o.h-hitH) : o.y; let oBox = {x: hitX, y: hitY, w: hitW, h: hitH}, pBox = {x: this.player.x, y: this.player.y, w: this.player.w, h: this.player.h}; if(pBox.x < oBox.x + oBox.w && pBox.x + pBox.w > oBox.x && pBox.y < oBox.y + oBox.h && pBox.y + pBox.h > oBox.y) { if(o.type === 'platform' && this.player.vy >= 0 && prevY + pBox.h <= oBox.y + 10) { this.player.y = oBox.y - pBox.h; this.player.vy = 0; onGround = true; } else this.isAlive = false; } } if((this.input.isDown('action') || this.input.isDown('up')) && onGround) this.player.vy = -this.jumpForce; }
+            draw() { this.ctx.fillStyle = '#17102e'; this.ctx.fillRect(0,0,800,600); this.ctx.strokeStyle = 'rgba(255,255,255,0.05)'; for(let i=0; i<10; i++) { this.ctx.beginPath(); this.ctx.moveTo((i*100) - this.bgOffset, 0); this.ctx.lineTo((i*100) - this.bgOffset, this.groundY); this.ctx.stroke(); } this.ctx.fillStyle = '#0a0a0a'; this.ctx.fillRect(0, this.groundY, 800, 600 - this.groundY); this.ctx.fillStyle = '#00e5ff'; this.ctx.fillRect(0, this.groundY, 800, 3); for(let o of this.obstacles) { if(o.type === 'spike') { this.ctx.fillStyle = '#ff0055'; this.ctx.beginPath(); this.ctx.moveTo(o.x + o.w/2, o.y); this.ctx.lineTo(o.x + o.w, o.y + o.h); this.ctx.lineTo(o.x, o.y + o.h); this.ctx.fill(); } else if (o.type === 'flyblock') { this.ctx.fillStyle = '#e67e22'; this.ctx.fillRect(o.x, o.y, o.w, o.h); } else if (o.type === 'platform') { this.ctx.fillStyle = '#2ecc71'; this.ctx.fillRect(o.x, o.y, o.w, o.h); this.ctx.fillStyle = 'rgba(0,0,0,0.5)'; this.ctx.fillRect(o.x, o.y + 5, o.w, o.h - 5); } } this.ctx.fillStyle = '#f1c40f'; this.ctx.fillRect(this.player.x, this.player.y, this.player.w, this.player.h); this.ctx.fillStyle = '#f39c12'; this.ctx.fillRect(this.player.x+8, this.player.y+8, this.player.w-16, this.player.h-16); }
             getScore() { return Math.floor(this.score); }
         }
 
-        // --- CORE MANAGER ---
+        // ==========================================
+        // CORE MANAGER
+        // ==========================================
         class GameManager {
             constructor() {
-                this.canvas = document.getElementById('gameCanvas'); this.ctx = this.canvas.getContext('2d');
+                this.canvas = document.getElementById('gameCanvas'); 
+                this.ctx = this.canvas.getContext('2d');
                 this.input = new InputHandler();
-                this.uiMenu = document.getElementById('mainMenu'); this.uiGameOver = document.getElementById('gameOver');
-                this.uiHud = document.getElementById('hud'); this.uiControls = document.getElementById('hud-controls');
-                this.elScore = document.getElementById('scoreVal'); this.elFinalScore = document.getElementById('finalScoreVal');
-                this.elLevelDisp = document.getElementById('levelDisplay'); this.elLevelVal = document.getElementById('levelVal');
+                this.uiMenu = document.getElementById('mainMenu'); 
+                this.uiGameOver = document.getElementById('gameOver');
+                this.uiHud = document.getElementById('hud'); 
+                this.uiControls = document.getElementById('hud-controls');
+                this.elScore = document.getElementById('scoreVal'); 
+                this.elFinalScore = document.getElementById('finalScoreVal');
+                this.elLevelDisp = document.getElementById('levelDisplay'); 
+                this.elLevelVal = document.getElementById('levelVal');
+                this.mobileUI = document.getElementById('mobileControls');
+                this.aimTip = document.getElementById('aimTip');
+
+                // JAVÍTVA: Szigorú mobil detektálás (User Agent alapján, nem képernyő touchPoint alapján!)
+                this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
                 this.menuBg = new MenuBackground(this.canvas, this.ctx);
-                this.activeGame = null; this.activeGameName = ''; this.lastTime = performance.now();
+                this.activeGame = null; 
+                this.activeGameName = ''; 
+                this.lastTime = performance.now();
+                
                 requestAnimationFrame(t => this.loop(t));
             }
 
             showMenu() {
+                if(document.pointerLockElement) document.exitPointerLock();
                 this.activeGame = null;
-                this.uiMenu.classList.remove('hidden'); this.uiGameOver.classList.add('hidden');
-                this.uiHud.classList.add('hidden'); this.uiControls.classList.add('hidden');
+                this.uiMenu.classList.remove('hidden'); 
+                this.uiGameOver.classList.add('hidden');
+                this.uiHud.classList.add('hidden'); 
+                this.uiControls.classList.add('hidden');
+                this.mobileUI.classList.add('hidden');
+                this.input.clearConsumes();
             }
 
             startGame(name) {
                 this.activeGameName = name;
+                if(name === 'mine') this.activeGame = new MineGame(this.canvas, this.ctx, this.input);
                 if(name === 'slope') this.activeGame = new SlopeGame(this.canvas, this.ctx, this.input);
                 if(name === 'moto') this.activeGame = new MotoGame(this.canvas, this.ctx, this.input);
                 if(name === 'car')  this.activeGame = new CarGame(this.canvas, this.ctx, this.input);
                 if(name === 'dash') this.activeGame = new DashGame(this.canvas, this.ctx, this.input);
+                if(name === 'royale') this.activeGame = new RoyaleGame(this.canvas, this.ctx, this.input);
 
-                if(name === 'dash') this.elLevelDisp.classList.remove('hidden');
+                if(name === 'dash' || name === 'slope') this.elLevelDisp.classList.remove('hidden');
                 else this.elLevelDisp.classList.add('hidden');
 
-                this.uiMenu.classList.add('hidden'); this.uiGameOver.classList.add('hidden');
-                this.uiHud.classList.remove('hidden'); this.uiControls.classList.remove('hidden');
+                if (name === 'royale' && !this.isMobile) this.aimTip.classList.remove('hidden');
+                else this.aimTip.classList.add('hidden');
+
+                this.uiMenu.classList.add('hidden'); 
+                this.uiGameOver.classList.add('hidden');
+                this.uiHud.classList.remove('hidden'); 
+                this.uiControls.classList.remove('hidden');
+                
+                if(this.isMobile) {
+                    this.mobileUI.classList.remove('hidden');
+                }
+
+                if (name === 'royale' && !this.isMobile) {
+                    setTimeout(() => { if(document.pointerLockElement !== this.canvas) this.canvas.requestPointerLock(); }, 100);
+                }
+
+                this.input.clearConsumes();
                 this.lastTime = performance.now();
             }
 
             restartGame() { this.startGame(this.activeGameName); }
 
             loop(t) {
-                let dt = (t - this.lastTime) / 1000; this.lastTime = t; if(dt > 0.1) dt = 0.1;
+                let dt = (t - this.lastTime) / 1000; 
+                this.lastTime = t; 
+                if(dt > 0.1) dt = 0.1;
 
                 if(!this.activeGame) {
-                    this.menuBg.update(dt); this.menuBg.draw();
+                    this.menuBg.update(dt); 
+                    this.menuBg.draw();
                 } else {
-                    if(this.input.consume('Escape')) this.showMenu();
-                    else {
-                        this.activeGame.update(dt); this.activeGame.draw();
+                    if(this.input.consume('esc')) {
+                        this.showMenu();
+                    } else {
+                        if (this.activeGameName === 'royale' && document.pointerLockElement) {
+                            this.aimTip.classList.add('hidden');
+                        } else if (this.activeGameName === 'royale' && !this.isMobile) {
+                            this.aimTip.classList.remove('hidden');
+                        }
+
+                        this.activeGame.update(dt); 
+                        this.activeGame.draw();
                         this.elScore.innerText = this.activeGame.getScore();
                         if(this.activeGame.level) this.elLevelVal.innerText = this.activeGame.level;
 
                         if(!this.activeGame.isAlive) {
                             if(this.activeGameName === 'slope' && this.activeGame.fallOffset < 800) {
-                                // Még lezuhan...
+                                // Zuhanás...
                             } else {
+                                if(document.pointerLockElement) document.exitPointerLock();
                                 this.uiGameOver.classList.remove('hidden');
-                                this.uiHud.classList.add('hidden'); this.uiControls.classList.add('hidden');
+                                this.uiHud.classList.add('hidden'); 
+                                this.uiControls.classList.add('hidden');
+                                this.mobileUI.classList.add('hidden');
                                 this.elFinalScore.innerText = this.activeGame.getScore();
                             }
                         }
@@ -596,7 +879,10 @@
             }
         }
 
-        const app = new GameManager(); app.showMenu();
+        window.addEventListener('load', () => {
+            window.app = new GameManager();
+            window.app.showMenu();
+        });
     </script>
 </body>
 </html>
