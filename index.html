@@ -670,7 +670,6 @@
                         }
                     });
 
-                    // ÚJ RÉSZ: Következő kör indulásának elkapása a szervertől
                     socket.on('startNextRound', () => {
                         if (this.activeGame && this.activeGameName === 'soccer_online') {
                             this.activeGame.isAlive = true;
@@ -744,9 +743,9 @@
                 this.uiGameOver.classList.add('hidden');
                 this.uiHud.classList.remove('hidden'); 
                 
+                // ITT A JAVÍTÁS: Mindent egyszerűsítettem, ha mobil, gombok be!
                 if(this.isMobile) {
-                    if(name !== 'soccer' && name !== 'soccer_online' && name !== 'slope' && name !== 'car' && name !== 'moto') this.mobileUI.classList.remove('hidden');
-                    else if (name === 'soccer' || name === 'soccer_online') this.mobileUI.classList.remove('hidden');
+                    this.mobileUI.classList.remove('hidden');
                     document.getElementById('hud-controls').classList.add('hidden');
                     this.mobileMenuBtn.classList.remove('hidden');
                 } else {
@@ -760,7 +759,6 @@
             }
 
             restartGame() {
-                // ÚJ RÉSZ: Ha online fociban vagyunk, a gomb csak jelez a szervernek, nem indítja újra a játékot nulláról
                 if (this.activeGameName === 'soccer_online') {
                     if (socket) socket.emit('nextRound', this.activeGame.roomCode);
                 } else {
@@ -801,7 +799,6 @@
                                 if (this.activeGame.message) { document.getElementById('goTitle').innerText = this.activeGame.message; } 
                                 else { document.getElementById('goTitle').innerText = "Game Over"; }
 
-                                // ÚJ RÉSZ: Dinamikus gomb szöveg - Focinál "Folytatás"
                                 if (this.activeGameName === 'soccer_online') { 
                                     document.getElementById('btnRestart').innerText = "Folytatás";
                                     document.getElementById('btnRestart').classList.remove('hidden'); 
