@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arcade Hub - Ultimate 6 Games</title>
+    <title>Arcade Hub - Ultimate 7 Games</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
         body { 
@@ -44,13 +44,14 @@
         
         .mc-btn { border-color: #4CAF50 !important; box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.2); }
         .mc-btn:hover { background: rgba(76, 175, 80, 0.2); border-color: #4CAF50; box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); }
+        .soccer-btn { border-color: #f39c12 !important; box-shadow: inset 0 0 10px rgba(243, 156, 18, 0.2); }
+        .soccer-btn:hover { background: rgba(243, 156, 18, 0.2); border-color: #f39c12; box-shadow: 0 0 15px rgba(243, 156, 18, 0.5); }
 
         #hud { position: absolute; top: 15px; left: 20px; z-index: 5; font-size: clamp(1.2rem, 3vw, 1.5rem); font-weight: bold; text-shadow: 2px 2px 4px #000; pointer-events: none;}
         #hud-controls { position: absolute; top: 15px; right: 20px; z-index: 5; font-size: 1rem; color: #ccc; text-shadow: 2px 2px 4px #000; text-align: right; pointer-events: none;}
         .lvl-text { color: #f1c40f; margin-left: 10px; }
         .tip { font-size: 0.8rem; color: #39ff14; margin-top: 5px; }
 
-        /* VISSZA GOMB TELEFONRA */
         #mobileMenuBtn {
             position: absolute; top: 15px; right: 15px; z-index: 25;
             background: rgba(255, 0, 85, 0.3); border: 2px solid rgba(255, 0, 85, 0.6);
@@ -108,12 +109,18 @@
         <div id="mainMenu" class="overlay">
             <h1>Arcade Hub</h1>
             <div class="btn-group">
-                <button onclick="window.app.startGame('mine')" class="mc-btn">Mine2D (Építő & Túlélő!)</button>
+                <button onclick="window.app.startGame('soccer')" class="soccer-btn">Foci: Büntetőpárbaj</button>
+                <button onclick="window.app.startGame('mine')" class="mc-btn">Mine2D (Építő!)</button>
                 <button onclick="window.app.startGame('royale')" style="border-color:#39ff14;">Neon Royale (3D FPS)</button>
                 <button onclick="window.app.startGame('slope')">Slope 3D</button>
                 <button onclick="window.app.startGame('moto')">Motorverseny</button>
                 <button onclick="window.app.startGame('car')">Autóverseny</button>
                 <button onclick="window.app.startGame('dash')">Geometry Dash</button>
+            </div>
+            
+            <!-- FORRÁSKÓD LINK -->
+            <div style="position: absolute; bottom: 15px; left: 15px; color: gray; font-size: 0.9rem;">
+                Forráskód: <a href="https://raw.githubusercontent.com/bionicrepo/infoora-games/refs/heads/main/index.html" target="_blank" style="color: gray; text-decoration: underline;">link</a>
             </div>
         </div>
 
@@ -239,6 +246,10 @@
                     let dx = e.touches[0].clientX - lastTouchX; let dy = e.touches[0].clientY - lastTouchY;
                     this.movementX += dx * 2; this.movementY += dy * 2;
                     lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
+                    
+                    let r = cvs.getBoundingClientRect();
+                    this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width);
+                    this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height);
                 }, { passive: false });
 
                 document.querySelectorAll('.m-btn').forEach(btn => {
@@ -331,15 +342,153 @@
         }
 
         // ==========================================
+        // FOCI - BÜNTETŐPÁRBAJ
+        // ==========================================
+        class SoccerGame {
+            constructor(canvas, ctx, input) { 
+                this.canvas = canvas; 
+                this.ctx = ctx; 
+                this.input = input; 
+                this.reset(); 
+            }
+            
+            reset() {
+                this.score = 0;
+                this.isAlive = true;
+                this.baseGoalieSpeed = 250;
+                this.resetTurn();
+            }
+            
+            resetTurn() {
+                this.ball = { x: 400, y: 500, r: 12, vx: 0, vy: 0, state: 'aim' };
+                this.aimAngle = -Math.PI / 2;
+                
+                let gDir = Math.random() > 0.5 ? 1 : -1;
+                this.goalie = { x: 400, y: 120, w: 80, h: 20, vx: this.baseGoalieSpeed + (this.score * 40), dir: gDir };
+                this.goal = { x: 200, y: 50, w: 400, h: 60 };
+                
+                this.aimCooldown = 0.2; 
+                this.input.clearConsumes();
+            }
+            
+            update(dt) {
+                if (!this.isAlive) return;
+
+                if (this.aimCooldown > 0) this.aimCooldown -= dt;
+
+                this.goalie.x += this.goalie.vx * this.goalie.dir * dt;
+                if (this.goalie.x - this.goalie.w/2 < this.goal.x) { 
+                    this.goalie.x = this.goal.x + this.goalie.w/2; this.goalie.dir *= -1; 
+                }
+                if (this.goalie.x + this.goalie.w/2 > this.goal.x + this.goal.w) { 
+                    this.goalie.x = this.goal.x + this.goal.w - this.goalie.w/2; this.goalie.dir *= -1; 
+                }
+
+                if (this.ball.state === 'aim') {
+                    let mx = this.input.mouse.x;
+                    let my = this.input.mouse.y;
+                    
+                    if (my >= this.ball.y - 20) my = this.ball.y - 20;
+                    
+                    let dx = mx - this.ball.x;
+                    let dy = my - this.ball.y;
+                    this.aimAngle = Math.atan2(dy, dx);
+
+                    if (this.aimCooldown <= 0 && (this.input.consume('action') || this.input.consume('click'))) {
+                        this.ball.state = 'shoot';
+                        let power = 1000;
+                        this.ball.vx = Math.cos(this.aimAngle) * power;
+                        this.ball.vy = Math.sin(this.aimAngle) * power;
+                    }
+                } else if (this.ball.state === 'shoot') {
+                    this.ball.x += this.ball.vx * dt;
+                    this.ball.y += this.ball.vy * dt;
+
+                    let r = this.ball.r;
+                    let gx = this.goalie.x - this.goalie.w/2;
+                    let gy = this.goalie.y - this.goalie.h/2;
+                    
+                    if (this.ball.x + r > gx && this.ball.x - r < gx + this.goalie.w &&
+                        this.ball.y + r > gy && this.ball.y - r < gy + this.goalie.h) {
+                        this.isAlive = false; 
+                    }
+
+                    if (this.ball.y < this.goal.y + this.goal.h) {
+                        if (this.ball.x > this.goal.x && this.ball.x < this.goal.x + this.goal.w) {
+                            this.score++;
+                            this.resetTurn();
+                        } else {
+                            this.isAlive = false; 
+                        }
+                    }
+                    
+                    if(this.ball.x < 0 || this.ball.x > 800 || this.ball.y < 0) this.isAlive = false;
+                }
+            }
+            
+            draw() {
+                this.ctx.fillStyle = '#2E8B57';
+                this.ctx.fillRect(0, 0, 800, 600);
+                this.ctx.fillStyle = '#228B22';
+                for(let i=0; i<800; i+=100) this.ctx.fillRect(i, 0, 50, 600);
+
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+                this.ctx.lineWidth = 4;
+                this.ctx.strokeRect(100, 50, 600, 300);
+                this.ctx.beginPath(); this.ctx.arc(400, 350, 80, 0, Math.PI); this.ctx.stroke();
+                this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(400, 500, 5, 0, Math.PI*2); this.ctx.fill();
+
+                this.ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                this.ctx.fillRect(this.goal.x, this.goal.y, this.goal.w, this.goal.h);
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.lineWidth = 6;
+                this.ctx.strokeRect(this.goal.x, this.goal.y, this.goal.w, this.goal.h);
+                this.ctx.lineWidth = 1;
+                for(let i=this.goal.x; i<this.goal.x+this.goal.w; i+=15) {
+                    this.ctx.beginPath(); this.ctx.moveTo(i, this.goal.y); this.ctx.lineTo(i, this.goal.y+this.goal.h); this.ctx.stroke();
+                }
+                for(let i=this.goal.y; i<this.goal.y+this.goal.h; i+=15) {
+                    this.ctx.beginPath(); this.ctx.moveTo(this.goal.x, i); this.ctx.lineTo(this.goal.x+this.goal.w, i); this.ctx.stroke();
+                }
+
+                let gx = this.goalie.x - this.goalie.w/2;
+                let gy = this.goalie.y - this.goalie.h/2;
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.fillRect(gx, gy, this.goalie.w, this.goalie.h);
+                this.ctx.fillStyle = '#f1c40f';
+                this.ctx.beginPath(); this.ctx.arc(gx - 5, this.goalie.y, 8, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(gx + this.goalie.w + 5, this.goalie.y, 8, 0, Math.PI*2); this.ctx.fill();
+
+                this.ctx.fillStyle = '#fff';
+                this.ctx.beginPath(); this.ctx.arc(this.ball.x, this.ball.y, this.ball.r, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.fillStyle = '#111';
+                this.ctx.beginPath(); this.ctx.arc(this.ball.x, this.ball.y, this.ball.r * 0.4, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(this.ball.x - 6, this.ball.y - 6, this.ball.r * 0.25, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.beginPath(); this.ctx.arc(this.ball.x + 6, this.ball.y + 6, this.ball.r * 0.25, 0, Math.PI*2); this.ctx.fill();
+
+                if (this.ball.state === 'aim' && this.aimCooldown <= 0) {
+                    this.ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
+                    this.ctx.lineWidth = 4;
+                    this.ctx.setLineDash([10, 10]);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.ball.x, this.ball.y);
+                    this.ctx.lineTo(this.ball.x + Math.cos(this.aimAngle) * 150, this.ball.y + Math.sin(this.aimAngle) * 150);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+            }
+            
+            getScore() { return this.score; }
+        }
+
+        // ==========================================
         // MINE 2D
         // ==========================================
         class MineGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
-            
             reset() {
                 this.tileSize = 30; this.cols = 100; this.rows = 60;
                 this.map = [];
-                
                 for(let x=0; x<this.cols; x++) {
                     this.map[x] = [];
                     let h = 30 + Math.floor(Math.sin(x/5)*3 + Math.sin(x/2)*2);
@@ -350,7 +499,6 @@
                         else this.map[x][y] = 3; 
                     }
                 }
-
                 for(let x=3; x<this.cols-3; x++) {
                     let h = 30 + Math.floor(Math.sin(x/5)*3 + Math.sin(x/2)*2);
                     if (Math.random() < 0.08) { 
@@ -359,105 +507,67 @@
                         this.map[x][h-4] = 5; 
                     }
                 }
-                
                 this.p = { x: 50 * this.tileSize, y: 10 * this.tileSize, w: 20, h: 38, vx: 0, vy: 0 };
                 this.cam = { x: this.p.x - 400, y: this.p.y - 300 };
-                
                 this.selectedBlock = 4; 
                 this.colors = [null, '#4CAF50', '#795548', '#9E9E9E', '#5D4037', '#2E7D32'];
                 this.isAlive = true;
             }
-
-            getBlock(tx, ty) {
-                if(tx>=0 && tx<this.cols && ty>=0 && ty<this.rows) return this.map[tx][ty];
-                return 3; 
-            }
-
-            setBlock(tx, ty, val) {
-                if(tx>=0 && tx<this.cols && ty>=0 && ty<this.rows) this.map[tx][ty] = val;
-            }
-
+            getBlock(tx, ty) { if(tx>=0 && tx<this.cols && ty>=0 && ty<this.rows) return this.map[tx][ty]; return 3; }
+            setBlock(tx, ty, val) { if(tx>=0 && tx<this.cols && ty>=0 && ty<this.rows) this.map[tx][ty] = val; }
             collide(x, y) {
                 let left = Math.floor(x / this.tileSize); let right = Math.floor((x + this.p.w - 0.1) / this.tileSize);
                 let top = Math.floor(y / this.tileSize); let bottom = Math.floor((y + this.p.h - 0.1) / this.tileSize);
                 for(let tx = left; tx <= right; tx++) {
-                    for(let ty = top; ty <= bottom; ty++) {
-                        if(this.getBlock(tx, ty) !== 0) return true;
-                    }
+                    for(let ty = top; ty <= bottom; ty++) { if(this.getBlock(tx, ty) !== 0) return true; }
                 }
                 return false;
             }
-
             update(dt) {
                 for(let i=1; i<=5; i++) { if(this.input.keys['Digit'+i]) this.selectedBlock = i; }
-
                 let move = 0;
                 if(this.input.isDown('left')) move -= 1;
                 if(this.input.isDown('right')) move += 1;
-                
                 this.p.vx = move * 200; this.p.x += this.p.vx * dt;
                 if(this.collide(this.p.x, this.p.y)) this.p.x -= this.p.vx * dt;
-
                 this.p.vy += 1500 * dt; this.p.y += this.p.vy * dt;
                 let onGround = false;
-                
                 if(this.collide(this.p.x, this.p.y)) {
-                    if(this.p.vy > 0) {
-                        this.p.y = Math.floor((this.p.y + this.p.h) / this.tileSize) * this.tileSize - this.p.h;
-                        onGround = true;
-                    } else {
-                        this.p.y = Math.floor(this.p.y / this.tileSize + 1) * this.tileSize;
-                    }
+                    if(this.p.vy > 0) { this.p.y = Math.floor((this.p.y + this.p.h) / this.tileSize) * this.tileSize - this.p.h; onGround = true; } 
+                    else { this.p.y = Math.floor(this.p.y / this.tileSize + 1) * this.tileSize; }
                     this.p.vy = 0;
                 }
-
-                if((this.input.isDown('up') || this.input.keys.action) && onGround) {
-                    this.p.vy = -500;
-                }
-
+                if((this.input.isDown('up') || this.input.keys.action) && onGround) { this.p.vy = -500; }
                 if(this.input.consume('click')) {
                     let screenX = this.input.mouse.x; let screenY = this.input.mouse.y;
-
                     if (screenY >= 530 && screenX >= 290 && screenX <= 510) {
                         let idx = Math.floor((screenX - 300) / 40);
                         if (idx >= 0 && idx < 5) { this.selectedBlock = idx + 1; return; }
                     }
-
                     let wx = screenX + this.cam.x; let wy = screenY + this.cam.y;
                     let tx = Math.floor(wx / this.tileSize); let ty = Math.floor(wy / this.tileSize);
                     let cx = this.p.x + this.p.w/2; let cy = this.p.y + this.p.h/2;
-
                     if(Math.hypot(wx - cx, wy - cy) < 180) {
                         let b = this.getBlock(tx, ty);
-                        if(b !== 0) {
-                            this.setBlock(tx, ty, 0); 
-                        } else {
-                            let pLeft = Math.floor(this.p.x / this.tileSize);
-                            let pRight = Math.floor((this.p.x + this.p.w - 0.1) / this.tileSize);
-                            let pTop = Math.floor(this.p.y / this.tileSize);
-                            let pBottom = Math.floor((this.p.y + this.p.h - 0.1) / this.tileSize);
-                            
-                            if(!(tx >= pLeft && tx <= pRight && ty >= pTop && ty <= pBottom)) {
-                                this.setBlock(tx, ty, this.selectedBlock);
-                            }
+                        if(b !== 0) { this.setBlock(tx, ty, 0); } 
+                        else {
+                            let pLeft = Math.floor(this.p.x / this.tileSize); let pRight = Math.floor((this.p.x + this.p.w - 0.1) / this.tileSize);
+                            let pTop = Math.floor(this.p.y / this.tileSize); let pBottom = Math.floor((this.p.y + this.p.h - 0.1) / this.tileSize);
+                            if(!(tx >= pLeft && tx <= pRight && ty >= pTop && ty <= pBottom)) { this.setBlock(tx, ty, this.selectedBlock); }
                         }
                     }
                 }
-
                 this.cam.x += (this.p.x - 400 - this.cam.x) * 5 * dt;
                 this.cam.y += (this.p.y - 300 - this.cam.y) * 5 * dt;
                 if(this.p.y > this.rows * this.tileSize + 300) this.isAlive = false;
             }
-
             draw() {
                 this.ctx.fillStyle = '#87CEEB'; this.ctx.fillRect(0,0,800,600);
                 this.ctx.save(); this.ctx.translate(-this.cam.x, -this.cam.y);
-                
                 let startX = Math.max(0, Math.floor(this.cam.x / this.tileSize));
                 let endX = Math.min(this.cols, Math.ceil((this.cam.x + 800) / this.tileSize));
                 let startY = Math.max(0, Math.floor(this.cam.y / this.tileSize));
                 let endY = Math.min(this.rows, Math.ceil((this.cam.y + 600) / this.tileSize));
-
                 for(let x = startX; x < endX; x++) {
                     for(let y = startY; y < endY; y++) {
                         let b = this.map[x][y];
@@ -466,36 +576,25 @@
                             this.ctx.fillRect(x*this.tileSize, y*this.tileSize, this.tileSize+1, this.tileSize+1);
                             this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
                             this.ctx.strokeRect(x*this.tileSize, y*this.tileSize, this.tileSize, this.tileSize);
-                            if (b === 1) {
-                                this.ctx.fillStyle = '#81C784';
-                                this.ctx.fillRect(x*this.tileSize, y*this.tileSize, this.tileSize, 6);
-                            }
+                            if (b === 1) { this.ctx.fillStyle = '#81C784'; this.ctx.fillRect(x*this.tileSize, y*this.tileSize, this.tileSize, 6); }
                         }
                     }
                 }
-
                 this.ctx.fillStyle = '#ff0055'; this.ctx.fillRect(this.p.x, this.p.y, this.p.w, this.p.h);
                 this.ctx.fillStyle = '#fff'; this.ctx.fillRect(this.p.x + (this.p.vx > 0 ? 12 : 4), this.p.y + 6, 4, 4);
-
                 let wx = this.input.mouse.x + this.cam.x; let wy = this.input.mouse.y + this.cam.y;
                 let tx = Math.floor(wx / this.tileSize); let ty = Math.floor(wy / this.tileSize);
-                
                 if(Math.hypot(wx - (this.p.x+this.p.w/2), wy - (this.p.y+this.p.h/2)) < 180) {
                     this.ctx.strokeStyle = '#fff'; this.ctx.lineWidth = 2;
                     this.ctx.strokeRect(tx*this.tileSize, ty*this.tileSize, this.tileSize, this.tileSize);
                 }
-
                 this.ctx.restore();
-
                 this.ctx.fillStyle = 'rgba(0,0,0,0.6)'; this.ctx.fillRect(290, 530, 220, 60);
                 for(let i=1; i<=5; i++) {
                     let bx = 300 + (i-1)*40;
                     this.ctx.fillStyle = this.colors[i]; this.ctx.fillRect(bx, 545, 32, 32);
                     if (i === 1) { this.ctx.fillStyle = '#81C784'; this.ctx.fillRect(bx, 545, 32, 6); } 
-                    if(this.selectedBlock === i) {
-                        this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 3;
-                        this.ctx.strokeRect(bx, 545, 32, 32);
-                    }
+                    if(this.selectedBlock === i) { this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 3; this.ctx.strokeRect(bx, 545, 32, 32); }
                 }
                 this.ctx.fillStyle = '#fff'; this.ctx.font = '12px Tahoma'; this.ctx.textAlign = 'center';
                 this.ctx.fillText('HOTBAR (1-5 gomb vagy érintés)', 400, 520);
@@ -509,41 +608,33 @@
         // ==========================================
         class RoyaleGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
-            
             reset() {
                 this.p = { x: 0, y: 0, z: 0, speed: 300, hp: 100, angle: 0 };
                 this.cam = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0.3 };
                 this.zone = { x: 0, z: 0, r: 2500, shrinkRate: 12 };
                 this.bullets = []; this.enemies = []; this.particles = []; this.grass = []; this.buildings = [];
                 this.shootCooldown = 0; this.score = 0; this.timer = 0; this.isAlive = true;
-
-                for(let i=0; i<300; i++) {
-                    this.grass.push({ x: (Math.random()-0.5)*6000, z: (Math.random()-0.5)*6000, r: 20 + Math.random()*40, color: (Math.random() > 0.5 ? '#388E3C' : '#2E8B57') });
-                }
+                for(let i=0; i<300; i++) { this.grass.push({ x: (Math.random()-0.5)*6000, z: (Math.random()-0.5)*6000, r: 20 + Math.random()*40, color: (Math.random() > 0.5 ? '#388E3C' : '#2E8B57') }); }
                 for(let i=0; i<60; i++) {
                     let bx = (Math.random()-0.5)*5000; let bz = (Math.random()-0.5)*5000;
                     if (Math.abs(bx) < 300 && Math.abs(bz) < 300) continue; 
                     this.buildings.push({ x: bx, z: bz, r: 50 + Math.random()*80, h: 150 + Math.random()*250, color: (Math.random() > 0.5 ? '#2c3e50' : '#34495e'), neon: (Math.random() > 0.5 ? '#00e5ff' : '#ff0055') });
                 }
             }
-
             project(x, y, z) {
                 let dx = x - this.cam.x; let dy = y - this.cam.y; let dz = z - this.cam.z;
                 let cosY = Math.cos(this.cam.yaw); let sinY = Math.sin(this.cam.yaw);
                 let x1 = dx * cosY - dz * sinY; let z1 = dx * sinY + dz * cosY;
                 let cosP = Math.cos(this.cam.pitch); let sinP = Math.sin(this.cam.pitch);
                 let y2 = dy * cosP - z1 * sinP; let z2 = dy * sinP + z1 * cosP;
-
                 if (z2 < 10) return null; 
                 let fov = 400; let scale = fov / z2;
                 let px = 400 + x1 * scale; let py = 300 - y2 * scale; 
                 return { px, py, scale, dz: z2 };
             }
-
             update(dt) {
                 if(!this.isAlive) return;
                 this.timer += dt; this.score += dt * 5;
-                
                 if (document.pointerLockElement || this.input.movementX !== 0) {
                     this.cam.yaw += this.input.movementX * -0.003; 
                     this.cam.pitch += this.input.movementY * 0.003; 
@@ -553,35 +644,25 @@
                     if(this.input.isDown('q')) this.cam.yaw += 2.5 * dt;
                     if(this.input.isDown('e')) this.cam.yaw -= 2.5 * dt;
                 }
-
                 this.p.angle = this.cam.yaw; 
-
                 let moveX = 0, moveZ = 0;
                 if(this.input.isDown('left')) moveX -= 1;
                 if(this.input.isDown('right')) moveX += 1;
                 if(this.input.isDown('up')) moveZ += 1; 
                 if(this.input.isDown('down')) moveZ -= 1; 
-
                 if(moveX !== 0 || moveZ !== 0) {
                     let len = Math.hypot(moveX, moveZ); moveX /= len; moveZ /= len;
                     let sinY = Math.sin(this.cam.yaw); let cosY = Math.cos(this.cam.yaw);
                     let wdx = moveX * cosY + moveZ * sinY; let wdz = -moveX * sinY + moveZ * cosY;
-
-                    let nextX = this.p.x + wdx * this.p.speed * dt;
-                    let nextZ = this.p.z + wdz * this.p.speed * dt;
-
+                    let nextX = this.p.x + wdx * this.p.speed * dt; let nextZ = this.p.z + wdz * this.p.speed * dt;
                     let hitBuilding = false;
-                    for(let b of this.buildings) {
-                        if (Math.hypot(nextX - b.x, nextZ - b.z) < b.r + 15) { hitBuilding = true; break; }
-                    }
+                    for(let b of this.buildings) { if (Math.hypot(nextX - b.x, nextZ - b.z) < b.r + 15) { hitBuilding = true; break; } }
                     if (!hitBuilding) { this.p.x = nextX; this.p.z = nextZ; }
                 }
-
                 let camDist = 280;
                 this.cam.x = this.p.x - Math.sin(this.cam.yaw) * Math.cos(this.cam.pitch) * camDist;
                 this.cam.y = this.p.y + 120 + Math.sin(this.cam.pitch) * camDist;
                 this.cam.z = this.p.z - Math.cos(this.cam.yaw) * Math.cos(this.cam.pitch) * camDist;
-
                 if(this.shootCooldown > 0) this.shootCooldown -= dt;
                 if(this.input.isDown('action') && this.shootCooldown <= 0) {
                     let vx = Math.sin(this.cam.yaw) * Math.cos(this.cam.pitch);
@@ -590,45 +671,30 @@
                     this.bullets.push({ x: this.p.x, y: 50, z: this.p.z, vx: vx * 1600, vy: vy * 1600, vz: vz * 1600, life: 1.5 });
                     this.shootCooldown = 0.15; 
                 }
-
                 this.distToZone = Math.hypot(this.p.x - this.zone.x, this.p.z - this.zone.z);
                 if (this.distToZone > this.zone.r) this.p.hp -= 15 * dt; 
                 if (this.zone.r > 150) this.zone.r -= this.zone.shrinkRate * dt;
                 if (this.p.hp <= 0) this.isAlive = false;
-
                 for(let i=this.bullets.length-1; i>=0; i--) {
-                    let b = this.bullets[i]; 
-                    b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt; b.life -= dt;
+                    let b = this.bullets[i]; b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt; b.life -= dt;
                     let hitBuilding = false;
-                    for(let bl of this.buildings) {
-                        if (Math.hypot(b.x - bl.x, b.z - bl.z) < bl.r) { hitBuilding = true; break; }
-                    }
+                    for(let bl of this.buildings) { if (Math.hypot(b.x - bl.x, b.z - bl.z) < bl.r) { hitBuilding = true; break; } }
                     if(hitBuilding || b.y < 0 || b.life <= 0) {
                         if (hitBuilding) { for(let p=0; p<4; p++) this.particles.push({x: b.x, y: b.y, z: b.z, vx: (Math.random()-0.5)*200, vy: 50+Math.random()*100, vz: (Math.random()-0.5)*200, life: 0.2}); }
                         this.bullets.splice(i, 1); 
                     }
                 }
-
                 if (Math.random() < 0.02 + (this.timer / 3000)) {
-                    let angle = Math.random() * Math.PI * 2;
-                    let spawnR = this.zone.r * (0.8 + Math.random() * 0.4);
+                    let angle = Math.random() * Math.PI * 2; let spawnR = this.zone.r * (0.8 + Math.random() * 0.4);
                     this.enemies.push({ x: this.zone.x + Math.cos(angle)*spawnR, y: 0, z: this.zone.z + Math.sin(angle)*spawnR, hp: 40, speed: 90 + Math.random()*60 });
                 }
-
                 for(let i=this.enemies.length-1; i>=0; i--) {
-                    let e = this.enemies[i];
-                    let ex = this.p.x - e.x, ez = this.p.z - e.z;
-                    let eLen = Math.hypot(ex, ez);
-                    
+                    let e = this.enemies[i]; let ex = this.p.x - e.x, ez = this.p.z - e.z; let eLen = Math.hypot(ex, ez);
                     let eNextX = e.x + (ex/eLen) * e.speed * dt; let eNextZ = e.z + (ez/eLen) * e.speed * dt;
                     let hitBuilding = false;
-                    for(let b of this.buildings) {
-                        if (Math.hypot(eNextX - b.x, eNextZ - b.z) < b.r + 10) { hitBuilding = true; break; }
-                    }
+                    for(let b of this.buildings) { if (Math.hypot(eNextX - b.x, eNextZ - b.z) < b.r + 10) { hitBuilding = true; break; } }
                     if (!hitBuilding) { e.x = eNextX; e.z = eNextZ; }
-
                     if (eLen < 40) { this.p.hp -= 20 * dt; }
-
                     for(let j=this.bullets.length-1; j>=0; j--) {
                         let b = this.bullets[j];
                         if (Math.hypot(b.x - e.x, b.z - e.z) < 30 && b.y < 80) {
@@ -638,43 +704,31 @@
                     }
                     if(e.hp <= 0) { this.enemies.splice(i, 1); this.score += 100; }
                 }
-
                 for(let i=this.particles.length-1; i>=0; i--) {
-                    let p = this.particles[i]; 
-                    p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vy -= 800 * dt; 
-                    if(p.y < 0) p.y = 0;
-                    p.life -= dt;
+                    let p = this.particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vy -= 800 * dt; 
+                    if(p.y < 0) p.y = 0; p.life -= dt;
                     if(p.life <= 0) this.particles.splice(i, 1);
                 }
             }
-
             drawCylinder(ctx, px, py, scale, radius, height, color) {
                 let w = radius * 2 * scale; let h = height * scale;
                 ctx.fillStyle = color; ctx.fillRect(px - w/2, py - h, w, h);
                 ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(px, py - h, w/2, w/4, 0, 0, Math.PI*2); ctx.fill();
                 ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(px - w/2, py - h, w, h);
             }
-
             draw() {
                 let isOutsideZone = (this.distToZone > this.zone.r);
                 let horizonY = 300 + Math.sin(this.cam.pitch) * 400;
-                
                 let skyGrad = this.ctx.createLinearGradient(0,0,0,horizonY);
-                skyGrad.addColorStop(0, isOutsideZone ? '#4B0082' : '#1E90FF'); 
-                skyGrad.addColorStop(1, isOutsideZone ? '#8A2BE2' : '#87CEEB'); 
+                skyGrad.addColorStop(0, isOutsideZone ? '#4B0082' : '#1E90FF'); skyGrad.addColorStop(1, isOutsideZone ? '#8A2BE2' : '#87CEEB'); 
                 this.ctx.fillStyle = skyGrad; this.ctx.fillRect(0,0,800,horizonY);
-
                 if (!isOutsideZone) {
                     this.ctx.fillStyle = '#FFD700'; this.ctx.shadowColor = '#FFA500'; this.ctx.shadowBlur = 20;
-                    this.ctx.beginPath(); this.ctx.arc(400, horizonY - 150, 40, 0, Math.PI*2); this.ctx.fill();
-                    this.ctx.shadowBlur = 0;
+                    this.ctx.beginPath(); this.ctx.arc(400, horizonY - 150, 40, 0, Math.PI*2); this.ctx.fill(); this.ctx.shadowBlur = 0;
                 }
-
                 let groundGrad = this.ctx.createLinearGradient(0,horizonY,0,600);
-                groundGrad.addColorStop(0, isOutsideZone ? '#2d1a3a' : '#2E8B57'); 
-                groundGrad.addColorStop(1, isOutsideZone ? '#3e1547' : '#4CAF50'); 
+                groundGrad.addColorStop(0, isOutsideZone ? '#2d1a3a' : '#2E8B57'); groundGrad.addColorStop(1, isOutsideZone ? '#3e1547' : '#4CAF50'); 
                 this.ctx.fillStyle = groundGrad; this.ctx.fillRect(0, horizonY, 800, 600 - horizonY);
-
                 let drawables = [];
                 for(let g of this.grass) { let p = this.project(g.x, 0, g.z); if(p) drawables.push({ type: 'grass', ...p, r: g.r, color: g.color }); }
                 for(let b of this.buildings) { let p = this.project(b.x, 0, b.z); if(p) drawables.push({ type: 'building', ...p, b: b }); }
@@ -682,9 +736,7 @@
                 for(let e of this.enemies) { let ep = this.project(e.x, 0, e.z); if(ep) drawables.push({ type: 'enemy', ...ep }); }
                 for(let b of this.bullets) { let bp = this.project(b.x, b.y, b.z); if(bp) drawables.push({ type: 'bullet', ...bp }); }
                 for(let p of this.particles) { let pp = this.project(p.x, p.y, p.z); if(pp) drawables.push({ type: 'particle', ...pp, life: p.life }); }
-
                 drawables.sort((a,b) => b.dz - a.dz);
-
                 this.ctx.lineWidth = 3; this.ctx.fillStyle = 'rgba(138, 43, 226, 0.3)';
                 for(let i=0; i<60; i++) {
                     let a = (i/60) * Math.PI * 2; let wx = this.zone.x + Math.cos(a) * this.zone.r; let wz = this.zone.z + Math.sin(a) * this.zone.r;
@@ -696,42 +748,30 @@
                         this.ctx.fillStyle = 'rgba(138, 43, 226, 0.3)';
                     }
                 }
-
                 for(let item of drawables) {
                     let s = item.scale; let px = item.px; let py = item.py;
-                    if (item.type === 'grass') {
-                        this.ctx.fillStyle = item.color; this.ctx.beginPath(); this.ctx.ellipse(px, py, item.r * s, item.r * 0.3 * s, 0, 0, Math.PI*2); this.ctx.fill();
-                    }
+                    if (item.type === 'grass') { this.ctx.fillStyle = item.color; this.ctx.beginPath(); this.ctx.ellipse(px, py, item.r * s, item.r * 0.3 * s, 0, 0, Math.PI*2); this.ctx.fill(); }
                     else if (item.type === 'building') {
-                        let b = item.b;
-                        this.ctx.fillStyle = 'rgba(0,0,0,0.5)'; this.ctx.beginPath(); this.ctx.ellipse(px, py, b.r*s, (b.r/2)*s, 0, 0, Math.PI*2); this.ctx.fill();
-                        this.drawCylinder(this.ctx, px, py, s, b.r, b.h, b.color);
-                        this.ctx.fillStyle = b.neon; this.ctx.fillRect(px - b.r*s, py - b.h*s*0.8, b.r*2*s, 6*s);
+                        let b = item.b; this.ctx.fillStyle = 'rgba(0,0,0,0.5)'; this.ctx.beginPath(); this.ctx.ellipse(px, py, b.r*s, (b.r/2)*s, 0, 0, Math.PI*2); this.ctx.fill();
+                        this.drawCylinder(this.ctx, px, py, s, b.r, b.h, b.color); this.ctx.fillStyle = b.neon; this.ctx.fillRect(px - b.r*s, py - b.h*s*0.8, b.r*2*s, 6*s);
                     }
                     else if (item.type === 'player' || item.type === 'enemy') {
                         this.ctx.fillStyle = 'rgba(0,0,0,0.4)'; this.ctx.beginPath(); this.ctx.ellipse(px, py, 20*s, 8*s, 0, 0, Math.PI*2); this.ctx.fill();
-                        let isPlayer = item.type === 'player';
-                        let skinColor = isPlayer ? '#FFC0CB' : '#7CFC00'; let shirtColor = isPlayer ? '#00e5ff' : '#8B0000';
-                        this.drawCylinder(this.ctx, px - 6*s, py, s, 5, 20, '#191970'); 
-                        this.drawCylinder(this.ctx, px + 6*s, py, s, 5, 20, '#191970'); 
-                        this.drawCylinder(this.ctx, px, py - 20*s, s, 13, 30, shirtColor); 
-                        this.drawCylinder(this.ctx, px, py - 50*s, s, 9, 18, skinColor); 
+                        let isPlayer = item.type === 'player'; let skinColor = isPlayer ? '#FFC0CB' : '#7CFC00'; let shirtColor = isPlayer ? '#00e5ff' : '#8B0000';
+                        this.drawCylinder(this.ctx, px - 6*s, py, s, 5, 20, '#191970'); this.drawCylinder(this.ctx, px + 6*s, py, s, 5, 20, '#191970'); 
+                        this.drawCylinder(this.ctx, px, py - 20*s, s, 13, 30, shirtColor); this.drawCylinder(this.ctx, px, py - 50*s, s, 9, 18, skinColor); 
                     }
                     else if (item.type === 'bullet') { this.ctx.fillStyle = '#FFD700'; this.ctx.beginPath(); this.ctx.arc(px, py, 4*s, 0, Math.PI*2); this.ctx.fill(); }
                     else if (item.type === 'particle') { this.ctx.fillStyle = '#ff0055'; this.ctx.globalAlpha = item.life * 2; this.ctx.fillRect(px, py, 6*s, 6*s); this.ctx.globalAlpha = 1.0; }
                 }
-
                 this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 2; this.ctx.beginPath();
                 this.ctx.moveTo(390, 300); this.ctx.lineTo(410, 300); this.ctx.moveTo(400, 290); this.ctx.lineTo(400, 310); this.ctx.stroke();
-
                 if (isOutsideZone) {
                     this.ctx.fillStyle = 'rgba(255, 0, 85, 0.3)'; this.ctx.fillRect(0, 0, 800, 600);
                     this.ctx.fillStyle = '#fff'; this.ctx.font = 'bold 35px Tahoma'; this.ctx.textAlign = 'center';
                     this.ctx.shadowColor = '#000'; this.ctx.shadowBlur = 10;
-                    this.ctx.fillText('⚠️ VIHARBAN VAGY! ⚠️', 400, 150);
-                    this.ctx.textAlign = 'left'; this.ctx.shadowBlur = 0;
+                    this.ctx.fillText('⚠️ VIHARBAN VAGY! ⚠️', 400, 150); this.ctx.textAlign = 'left'; this.ctx.shadowBlur = 0;
                 }
-
                 this.ctx.fillStyle = '#333'; this.ctx.fillRect(20, 60, 200, 20);
                 this.ctx.fillStyle = this.p.hp > 30 ? '#39ff14' : '#ff0055'; this.ctx.fillRect(20, 60, Math.max(0, this.p.hp) * 2, 20);
             }
@@ -739,7 +779,7 @@
         }
 
         // ==========================================
-        // SLOPE 3D, MOTO, CAR, DASH
+        // SLOPE 3D
         // ==========================================
         class SlopeGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
@@ -749,6 +789,44 @@
             draw() { this.ctx.fillStyle = '#020010'; this.ctx.fillRect(0,0,800,600); let fov = 300, camHeight = 150, horizon = 200, projected = []; let currentSeg = this.segments.find(s => s.z > this.posZ) || this.segments[0]; let camX = currentSeg.x; for(let s of this.segments) { let dz = s.z - this.posZ; if (dz < 1) continue; let scale = fov / dz, slopeDrop = dz * 0.2; let px = 400 + (s.x - camX) * scale, py = horizon + (camHeight + slopeDrop) * scale; projected.push({ ...s, px: px, py: py, scale: scale }); } for(let i=projected.length-2; i>=0; i--) { let p1 = projected[i], p2 = projected[i+1], w1 = (p1.w/2) * p1.scale, w2 = (p2.w/2) * p2.scale; this.ctx.fillStyle = (Math.floor(p1.z / 100) % 2 === 0) ? '#08081a' : '#11112b'; this.ctx.beginPath(); this.ctx.moveTo(p1.px - w1, p1.py); this.ctx.lineTo(p1.px + w1, p1.py); this.ctx.lineTo(p2.px + w2, p2.py); this.ctx.lineTo(p2.px - w2, p2.py); this.ctx.fill(); this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 2; this.ctx.beginPath(); this.ctx.moveTo(p1.px - w1, p1.py); this.ctx.lineTo(p2.px - w2, p2.py); this.ctx.moveTo(p1.px + w1, p1.py); this.ctx.lineTo(p2.px + w2, p2.py); this.ctx.stroke(); if (p1.hasRamp) { this.ctx.fillStyle = '#f1c40f'; this.ctx.beginPath(); this.ctx.moveTo(p1.px - w1, p1.py); this.ctx.lineTo(p1.px + w1, p1.py); this.ctx.lineTo(p2.px + w2, p2.py - 30 * p2.scale); this.ctx.lineTo(p2.px - w2, p2.py - 30 * p2.scale); this.ctx.fill(); } if (p1.hasObs) { let obsW = 40 * p1.scale, obsH = 40 * p1.scale, obsPx = p1.px + (p1.obsX * p1.scale), obsPy = p1.py - obsH; this.ctx.fillStyle = '#ff0055'; this.ctx.fillRect(obsPx - obsW/2, obsPy, obsW, obsH); this.ctx.strokeStyle = '#fff'; this.ctx.strokeRect(obsPx - obsW/2, obsPy, obsW, obsH); } } let ballVisualDz = 200, ballScale = fov / ballVisualDz; let ballPx = 400 + (this.playerOffset * ballScale); let trackPyAtBall = horizon + (camHeight + ballVisualDz * 0.2) * ballScale; let ballPy = trackPyAtBall - 20 - (this.playerJumpHeight * ballScale) + this.fallOffset; this.ctx.fillStyle = '#39ff14'; this.ctx.beginPath(); this.ctx.arc(ballPx, ballPy, 20, 0, Math.PI*2); this.ctx.fill(); this.ctx.strokeStyle = '#050505'; this.ctx.lineWidth = 2; this.ctx.beginPath(); let roll = (this.posZ % 150) / 150 * Math.PI; this.ctx.ellipse(ballPx, ballPy, 20, 5 + 15*Math.abs(Math.sin(roll)), 0, 0, Math.PI*2); this.ctx.stroke(); }
             getScore() { return Math.floor(this.score); }
         }
+
+        // ==========================================
+        // CAR GAME (JAVÍTOTT: TELJESEN LAPOS HITBOX)
+        // ==========================================
+        class CarGame {
+            constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
+            reset() { this.speed = 150; this.posZ = 0; this.playerX = 0; this.score = 0; this.isAlive = true; this.trackCurve = 0; this.enemies = []; this.spawnTimer = 0; }
+            update(dt) { 
+                if(!this.isAlive) return; 
+                this.score += 5 * dt; this.speed += 2 * dt; this.posZ += this.speed * dt; this.trackCurve = Math.sin(this.posZ / 600) * 1.5; 
+                
+                if(this.input.isDown('left')) this.playerX -= 1.8 * dt; 
+                if(this.input.isDown('right')) this.playerX += 1.8 * dt; 
+                
+                if(this.playerX < -0.75) this.playerX = -0.75;
+                if(this.playerX > 0.75) this.playerX = 0.75;
+
+                this.spawnTimer += dt; if(this.spawnTimer > 1.2) { let lane = Math.floor(Math.random() * 3) - 1; this.enemies.push({ x: lane * 0.8, z: this.posZ + 600, speed: this.speed * 0.6 }); this.spawnTimer = 0; } 
+                
+                for(let i = this.enemies.length-1; i>=0; i--) { 
+                    let e = this.enemies[i]; e.z += e.speed * dt; if(e.z < this.posZ - 100) { this.enemies.splice(i, 1); continue; } 
+                    let relZ = e.z - this.posZ; 
+                    
+                    // JAVÍTÁS: Teljesen "lapos" és szűk hitbox a grafikához igazítva
+                    // A szélesség just 0.18, a hossza pedig drasztikusan lerövidítve (±4 logikai egység)!
+                    let pLeft = this.playerX - 0.18, pRight = this.playerX + 0.18, pBack = -4, pFront = 4; 
+                    let eLeft = e.x - 0.18, eRight = e.x + 0.18, eBack = relZ - 4, eFront = relZ + 4; 
+                    
+                    if((pRight > eLeft) && (pLeft < eRight) && (pFront > eBack) && (pBack < eFront)) this.isAlive = false; 
+                } 
+            }
+            draw() { let w = this.canvas.width, h = this.canvas.height, horizon = h / 2 - 50; this.ctx.fillStyle = '#87CEEB'; this.ctx.fillRect(0, 0, w, horizon); this.ctx.fillStyle = '#f1c40f'; let sunX = w/2 - (this.trackCurve * 120); this.ctx.beginPath(); this.ctx.arc(sunX, horizon - 40, 30, 0, Math.PI*2); this.ctx.fill(); this.ctx.fillStyle = '#2ecc71'; this.ctx.fillRect(0, horizon, w, h - horizon); let drawDist = 300, segments = 30; for(let i = segments; i > 0; i--) { let z1 = i * (drawDist / segments), z2 = (i-1) * (drawDist / segments); let colorIdx = Math.floor((this.posZ + z1) / 20) % 2; let scale1 = 150 / z1, scale2 = 150 / (z2 === 0 ? 0.1 : z2); let y1 = horizon + 50 * scale1, y2 = horizon + 50 * scale2; let roadW1 = 150 * scale1, roadW2 = 150 * scale2; let curveX1 = this.trackCurve * Math.pow(z1 / drawDist, 2) * 150; let curveX2 = this.trackCurve * Math.pow(z2 / drawDist, 2) * 150; let cx1 = w/2 - (this.playerX * roadW1) + curveX1; let cx2 = w/2 - (this.playerX * roadW2) + curveX2; this.ctx.fillStyle = colorIdx === 0 ? '#fff' : '#e74c3c'; this.ctx.beginPath(); this.ctx.moveTo(cx1 - roadW1*1.1, y1); this.ctx.lineTo(cx1 + roadW1*1.1, y1); this.ctx.lineTo(cx2 + roadW2*1.1, y2); this.ctx.lineTo(cx2 - roadW2*1.1, y2); this.ctx.fill(); this.ctx.fillStyle = colorIdx === 0 ? '#555' : '#444'; this.ctx.beginPath(); this.ctx.moveTo(cx1 - roadW1, y1); this.ctx.lineTo(cx1 + roadW1, y1); this.ctx.lineTo(cx2 + roadW2, y2); this.ctx.lineTo(cx2 - roadW2, y2); this.ctx.fill(); } this.enemies.sort((a,b) => b.z - a.z); for(let e of this.enemies) { let dz = e.z - this.posZ; if(dz < -20) continue; let scale = 150 / (dz < 1 ? 1 : dz), ey = horizon + 50 * scale; let eCurveX = this.trackCurve * Math.pow(dz / drawDist, 2) * 150; let ex = w/2 + ((e.x - this.playerX) * 150 * scale) + eCurveX; drawCarRear(this.ctx, ex, ey, scale * 1.5, '#f1c40f'); } drawCarRear(this.ctx, w/2, h - 50, 2.5, '#e74c3c'); }
+            getScore() { return Math.floor(this.score); }
+        }
+
+        // ==========================================
+        // MOTO & DASH
+        // ==========================================
         class MotoGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
             reset() { this.lanes = [400, 480, 560]; this.player = { laneIdx: 1, x: 150, y: this.lanes[1] }; this.enemies = []; this.speed = 400; this.bgOffset = 0; this.score = 0; this.spawnTimer = 0; this.isAlive = true; }
@@ -756,13 +834,7 @@
             draw() { this.ctx.fillStyle = '#2c3e50'; this.ctx.fillRect(0,0,800,300); this.ctx.fillStyle = '#34495e'; for(let i=0; i<3; i++) { this.ctx.beginPath(); this.ctx.moveTo((i*400) - (this.bgOffset*0.2)%400, 300); this.ctx.lineTo((i*400)+200 - (this.bgOffset*0.2)%400, 100); this.ctx.lineTo((i*400)+400 - (this.bgOffset*0.2)%400, 300); this.ctx.fill(); } this.ctx.fillStyle = '#555'; this.ctx.fillRect(0, 300, 800, 300); this.ctx.fillStyle = '#fff'; for(let i=0; i<10; i++) { let lineX = (i*100) - (this.bgOffset % 100); this.ctx.fillRect(lineX, 440, 50, 4); this.ctx.fillRect(lineX, 520, 50, 4); } let entities = [ { ...this.player, isPlayer: true, color: '#3498db' } ]; this.enemies.forEach(e => entities.push({ ...e, isPlayer: false, color: '#e74c3c' })); entities.sort((a,b) => a.y - b.y); entities.forEach(ent => { let scale = 0.8 + (ent.y - 400) / 400; drawMotoSide(this.ctx, ent.x, ent.y, scale, ent.color); }); }
             getScore() { return Math.floor(this.score); }
         }
-        class CarGame {
-            constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
-            reset() { this.speed = 150; this.posZ = 0; this.playerX = 0; this.score = 0; this.isAlive = true; this.trackCurve = 0; this.enemies = []; this.spawnTimer = 0; }
-            update(dt) { if(!this.isAlive) return; this.score += 5 * dt; this.speed += 2 * dt; this.posZ += this.speed * dt; this.trackCurve = Math.sin(this.posZ / 600) * 1.5; if(this.input.isDown('left')) this.playerX -= 1.8 * dt; if(this.input.isDown('right')) this.playerX += 1.8 * dt; this.spawnTimer += dt; if(this.spawnTimer > 1.2) { let lane = Math.floor(Math.random() * 3) - 1; this.enemies.push({ x: lane * 0.8, z: this.posZ + 600, speed: this.speed * 0.6 }); this.spawnTimer = 0; } for(let i = this.enemies.length-1; i>=0; i--) { let e = this.enemies[i]; e.z += e.speed * dt; if(e.z < this.posZ - 100) { this.enemies.splice(i, 1); continue; } let relZ = e.z - this.posZ; let pLeft = this.playerX - 0.35, pRight = this.playerX + 0.35, pBack = -20, pFront = 20; let eLeft = e.x - 0.35, eRight = e.x + 0.35, eBack = relZ - 15, eFront = relZ + 15; if((pRight > eLeft) && (pLeft < eRight) && (pFront > eBack) && (pBack < eFront)) this.isAlive = false; } }
-            draw() { let w = this.canvas.width, h = this.canvas.height, horizon = h / 2 - 50; this.ctx.fillStyle = '#87CEEB'; this.ctx.fillRect(0, 0, w, horizon); this.ctx.fillStyle = '#f1c40f'; let sunX = w/2 - (this.trackCurve * 120); this.ctx.beginPath(); this.ctx.arc(sunX, horizon - 40, 30, 0, Math.PI*2); this.ctx.fill(); this.ctx.fillStyle = '#2ecc71'; this.ctx.fillRect(0, horizon, w, h - horizon); let drawDist = 300, segments = 30; for(let i = segments; i > 0; i--) { let z1 = i * (drawDist / segments), z2 = (i-1) * (drawDist / segments); let colorIdx = Math.floor((this.posZ + z1) / 20) % 2; let scale1 = 150 / z1, scale2 = 150 / (z2 === 0 ? 0.1 : z2); let y1 = horizon + 50 * scale1, y2 = horizon + 50 * scale2; let roadW1 = 150 * scale1, roadW2 = 150 * scale2; let curveX1 = this.trackCurve * Math.pow(z1 / drawDist, 2) * 150; let curveX2 = this.trackCurve * Math.pow(z2 / drawDist, 2) * 150; let cx1 = w/2 - (this.playerX * roadW1) + curveX1; let cx2 = w/2 - (this.playerX * roadW2) + curveX2; this.ctx.fillStyle = colorIdx === 0 ? '#fff' : '#e74c3c'; this.ctx.beginPath(); this.ctx.moveTo(cx1 - roadW1*1.1, y1); this.ctx.lineTo(cx1 + roadW1*1.1, y1); this.ctx.lineTo(cx2 + roadW2*1.1, y2); this.ctx.lineTo(cx2 - roadW2*1.1, y2); this.ctx.fill(); this.ctx.fillStyle = colorIdx === 0 ? '#555' : '#444'; this.ctx.beginPath(); this.ctx.moveTo(cx1 - roadW1, y1); this.ctx.lineTo(cx1 + roadW1, y1); this.ctx.lineTo(cx2 + roadW2, y2); this.ctx.lineTo(cx2 - roadW2, y2); this.ctx.fill(); } this.enemies.sort((a,b) => b.z - a.z); for(let e of this.enemies) { let dz = e.z - this.posZ; if(dz < -20) continue; let scale = 150 / (dz < 1 ? 1 : dz), ey = horizon + 50 * scale; let eCurveX = this.trackCurve * Math.pow(dz / drawDist, 2) * 150; let ex = w/2 + ((e.x - this.playerX) * 150 * scale) + eCurveX; drawCarRear(this.ctx, ex, ey, scale * 1.5, '#f1c40f'); } drawCarRear(this.ctx, w/2, h - 50, 2.5, '#e74c3c'); }
-            getScore() { return Math.floor(this.score); }
-        }
+
         class DashGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
             reset() { this.groundY = 500; this.player = { x: 150, y: this.groundY - 40, w: 40, h: 40, vy: 0 }; this.gravity = 2500; this.jumpForce = 850; this.obstacles = []; this.score = 0; this.level = 1; this.baseSpeed = 400; this.spawnTimer = 0; this.isAlive = true; this.bgOffset = 0; }
@@ -790,16 +862,10 @@
                 this.mobileUI = document.getElementById('mobileControls');
                 this.aimTip = document.getElementById('aimTip');
                 
-                // ÚJ: Mobil Vissza Gomb referencia
                 this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
-
                 this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-                // Gomb eseménykezelője (mind a kattintást, mind az érintést figyeli a biztonság kedvéért)
-                const showMenuHandler = (e) => {
-                    e.preventDefault();
-                    this.showMenu();
-                };
+                const showMenuHandler = (e) => { e.preventDefault(); this.showMenu(); };
                 this.mobileMenuBtn.addEventListener('touchstart', showMenuHandler);
                 this.mobileMenuBtn.addEventListener('mousedown', showMenuHandler);
 
@@ -819,7 +885,7 @@
                 this.uiHud.classList.add('hidden'); 
                 this.uiControls.classList.add('hidden');
                 this.mobileUI.classList.add('hidden');
-                this.mobileMenuBtn.classList.add('hidden'); // Gomb elrejtése a menüben
+                this.mobileMenuBtn.classList.add('hidden');
                 this.input.clearConsumes();
             }
 
@@ -831,6 +897,7 @@
                 if(name === 'car')  this.activeGame = new CarGame(this.canvas, this.ctx, this.input);
                 if(name === 'dash') this.activeGame = new DashGame(this.canvas, this.ctx, this.input);
                 if(name === 'royale') this.activeGame = new RoyaleGame(this.canvas, this.ctx, this.input);
+                if(name === 'soccer') this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input);
 
                 if(name === 'dash' || name === 'slope') this.elLevelDisp.classList.remove('hidden');
                 else this.elLevelDisp.classList.add('hidden');
@@ -842,11 +909,11 @@
                 this.uiGameOver.classList.add('hidden');
                 this.uiHud.classList.remove('hidden'); 
                 
-                // Mobilon megjelenítjük a dedikált gombot a gépes szöveg helyett
                 if(this.isMobile) {
-                    this.mobileUI.classList.remove('hidden');
-                    this.uiControls.classList.add('hidden'); // Eltüntetjük az "ESC: Menü" szöveget
-                    this.mobileMenuBtn.classList.remove('hidden'); // Megjelenítjük a piros gombot
+                    if(name !== 'soccer' && name !== 'slope' && name !== 'car' && name !== 'moto') this.mobileUI.classList.remove('hidden');
+                    else if (name === 'soccer') this.mobileUI.classList.remove('hidden');
+                    this.uiControls.classList.add('hidden');
+                    this.mobileMenuBtn.classList.remove('hidden');
                 } else {
                     this.uiControls.classList.remove('hidden');
                 }
@@ -886,7 +953,7 @@
 
                         if(!this.activeGame.isAlive) {
                             if(this.activeGameName === 'slope' && this.activeGame.fallOffset < 800) {
-                                // Zuhanás...
+                                // Zuhanás animáció
                             } else {
                                 if(document.pointerLockElement) document.exitPointerLock();
                                 this.uiGameOver.classList.remove('hidden');
