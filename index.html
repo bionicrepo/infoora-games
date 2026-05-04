@@ -92,7 +92,6 @@
             <h1>Arcade Hub</h1>
             <div class="btn-group">
                 <button onclick="window.app.startGame('soccer')" class="soccer-btn">Foci: Gép ellen</button>
-                <button onclick="window.app.startGame('soccer_1v1')" class="soccer-btn">Foci: 1v1 (Helyi)</button>
                 <button onclick="window.app.showOnlineLobby()" class="online-btn">Foci: ONLINE MULTI</button>
                 <button onclick="window.app.startGame('mine')" class="mc-btn">Mine2D (Építő!)</button>
                 <button onclick="window.app.startGame('royale')" style="border-color:#39ff14;">Neon Royale (3D FPS)</button>
@@ -180,7 +179,7 @@
         class SoccerGame {
             constructor(canvas, ctx, input, mode = 'bot', onlineRole = null, roomCode = null) { 
                 this.canvas = canvas; this.ctx = ctx; this.input = input; 
-                this.mode = mode; // 'bot', '1v1', 'online'
+                this.mode = mode; // 'bot' vagy 'online'
                 this.onlineRole = onlineRole; // 'goalie' vagy 'kicker'
                 this.roomCode = roomCode;
                 this.reset(); 
@@ -201,13 +200,13 @@
                 // KAPUS MOZGÁS
                 if (this.mode === 'bot') {
                     this.goalie.x += this.goalie.vx * this.goalie.dir * dt;
-                } else if (this.mode === '1v1' || (this.mode === 'online' && this.onlineRole === 'goalie')) {
+                } else if (this.mode === 'online' && this.onlineRole === 'goalie') {
                     let gMove = 0;
                     if (this.input.isDown('left')) gMove -= 1;
                     if (this.input.isDown('right')) gMove += 1;
                     this.goalie.x += gMove * 500 * dt;
 
-                    if (this.mode === 'online' && socket) {
+                    if (socket) {
                         socket.emit('updateGoalie', { room: this.roomCode, x: this.goalie.x });
                     }
                 }
@@ -581,7 +580,6 @@
                 for(let i = this.enemies.length-1; i>=0; i--) { 
                     let e = this.enemies[i]; e.z += e.speed * dt; if(e.z < this.posZ - 100) { this.enemies.splice(i, 1); continue; } 
                     let relZ = e.z - this.posZ; 
-                    // Lapos és szűk hitbox a grafikához igazítva
                     let pLeft = this.playerX - 0.18, pRight = this.playerX + 0.18, pBack = -4, pFront = 4; 
                     let eLeft = e.x - 0.18, eRight = e.x + 0.18, eBack = relZ - 4, eFront = relZ + 4; 
                     if((pRight > eLeft) && (pLeft < eRight) && (pFront > eBack) && (pBack < eFront)) this.isAlive = false; 
@@ -720,7 +718,6 @@
                 if(name === 'royale') this.activeGame = new RoyaleGame(this.canvas, this.ctx, this.input);
                 
                 if(name === 'soccer') this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input, 'bot');
-                if(name === 'soccer_1v1') this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input, '1v1');
                 if(name === 'soccer_online') {
                     this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input, 'online', role, roomCode);
                     this.uiOnlineLobby.classList.add('hidden');
@@ -729,8 +726,7 @@
                 if(name === 'dash' || name === 'slope') document.getElementById('levelDisplay').classList.remove('hidden');
                 else document.getElementById('levelDisplay').classList.add('hidden');
 
-                if (name === 'soccer_1v1') { this.aimTip.innerText = 'Kapus: A/D | Rúgó: Egér'; this.aimTip.classList.remove('hidden'); }
-                else if (name === 'soccer_online') { this.aimTip.innerText = role === 'goalie' ? 'Te vagy a KAPUS (A/D)' : 'Te vagy a RÚGÓ (Egér)'; this.aimTip.classList.remove('hidden'); }
+                if (name === 'soccer_online') { this.aimTip.innerText = role === 'goalie' ? 'Te vagy a KAPUS (A/D vagy Nyilak)' : 'Te vagy a RÚGÓ (Egér / Érintés)'; this.aimTip.classList.remove('hidden'); }
                 else if (name === 'royale' && !this.isMobile) { this.aimTip.innerText = 'Kattints a fegyverhez!'; this.aimTip.classList.remove('hidden'); }
                 else this.aimTip.classList.add('hidden');
 
@@ -738,9 +734,10 @@
                 this.uiGameOver.classList.add('hidden');
                 this.uiHud.classList.remove('hidden'); 
                 
+                // ITT A JAVÍTÁS: A foci kapusa is megkapja a mobilos D-padet!
                 if(this.isMobile) {
-                    if(name !== 'soccer' && name !== 'soccer_1v1' && name !== 'soccer_online' && name !== 'slope' && name !== 'car' && name !== 'moto') this.mobileUI.classList.remove('hidden');
-                    else if (name === 'soccer' || name === 'soccer_1v1' || (name === 'soccer_online' && role === 'kicker')) this.mobileUI.classList.remove('hidden');
+                    if(name !== 'soccer' && name !== 'soccer_online' && name !== 'slope' && name !== 'car' && name !== 'moto') this.mobileUI.classList.remove('hidden');
+                    else if (name === 'soccer' || name === 'soccer_online') this.mobileUI.classList.remove('hidden');
                     document.getElementById('hud-controls').classList.add('hidden');
                     this.mobileMenuBtn.classList.remove('hidden');
                 } else {
