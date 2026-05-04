@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Arcade Hub - Ultimate 7 Games</title>
+    <!-- Socket.io Kliens betöltése -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
         body { 
@@ -46,41 +48,27 @@
         .mc-btn:hover { background: rgba(76, 175, 80, 0.2); border-color: #4CAF50; box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); }
         .soccer-btn { border-color: #f39c12 !important; box-shadow: inset 0 0 10px rgba(243, 156, 18, 0.2); }
         .soccer-btn:hover { background: rgba(243, 156, 18, 0.2); border-color: #f39c12; box-shadow: 0 0 15px rgba(243, 156, 18, 0.5); }
+        .online-btn { border-color: #9b59b6 !important; box-shadow: inset 0 0 10px rgba(155, 89, 182, 0.2); }
+        .online-btn:hover { background: rgba(155, 89, 182, 0.2); border-color: #9b59b6; box-shadow: 0 0 15px rgba(155, 89, 182, 0.5); }
+
+        input[type="text"] { background: rgba(0,0,0,0.5); border: 2px solid #00e5ff; color: #fff; padding: 10px; font-size: 1.5rem; text-align: center; border-radius: 6px; outline: none; margin-bottom: 10px; width: 100%; letter-spacing: 3px; }
 
         #hud { position: absolute; top: 15px; left: 20px; z-index: 5; font-size: clamp(1.2rem, 3vw, 1.5rem); font-weight: bold; text-shadow: 2px 2px 4px #000; pointer-events: none;}
         #hud-controls { position: absolute; top: 15px; right: 20px; z-index: 5; font-size: 1rem; color: #ccc; text-shadow: 2px 2px 4px #000; text-align: right; pointer-events: none;}
         .lvl-text { color: #f1c40f; margin-left: 10px; }
         .tip { font-size: 0.8rem; color: #39ff14; margin-top: 5px; }
 
-        #mobileMenuBtn {
-            position: absolute; top: 15px; right: 15px; z-index: 25;
-            background: rgba(255, 0, 85, 0.3); border: 2px solid rgba(255, 0, 85, 0.6);
-            color: #fff; padding: 8px 15px; font-weight: bold; font-size: 1rem; border-radius: 6px;
-            cursor: pointer; text-shadow: 1px 1px 2px #000; box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
-        }
-        #mobileMenuBtn:active { background: rgba(255, 0, 85, 0.7); box-shadow: 0 0 15px rgba(255, 0, 85, 0.6); }
-
-        #mobileControls {
-            position: absolute; bottom: 20px; left: 0; width: 100%; height: 160px;
-            display: flex; justify-content: space-between; padding: 0 20px;
-            z-index: 20; pointer-events: none;
-        }
+        #mobileMenuBtn { position: absolute; top: 15px; right: 15px; z-index: 25; background: rgba(255, 0, 85, 0.3); border: 2px solid rgba(255, 0, 85, 0.6); color: #fff; padding: 8px 15px; font-weight: bold; font-size: 1rem; border-radius: 6px; cursor: pointer; text-shadow: 1px 1px 2px #000; box-shadow: 0 0 10px rgba(255, 0, 85, 0.3); }
+        #mobileControls { position: absolute; bottom: 20px; left: 0; width: 100%; height: 160px; display: flex; justify-content: space-between; padding: 0 20px; z-index: 20; pointer-events: none; }
         .d-pad { position: relative; width: 150px; height: 150px; pointer-events: auto; }
-        .m-btn {
-            position: absolute; background: rgba(0, 229, 255, 0.15); border: 2px solid rgba(0, 229, 255, 0.5);
-            color: #fff; font-weight: bold; border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); font-size: 1.5rem; text-shadow: 1px 1px 2px #000;
-        }
+        .m-btn { position: absolute; background: rgba(0, 229, 255, 0.15); border: 2px solid rgba(0, 229, 255, 0.5); color: #fff; font-weight: bold; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); font-size: 1.5rem; text-shadow: 1px 1px 2px #000; }
         .m-btn:active { background: rgba(0, 229, 255, 0.6); box-shadow: 0 0 20px rgba(0, 229, 255, 0.8); }
-        
         .btn-up { top: 0; left: 50px; width: 50px; height: 50px; }
         .btn-down { bottom: 0; left: 50px; width: 50px; height: 50px; }
         .btn-left { top: 50px; left: 0; width: 50px; height: 50px; }
         .btn-right { top: 50px; right: 0; width: 50px; height: 50px; }
-        
         .action-pad { position: relative; width: 120px; height: 150px; pointer-events: auto; display: flex; justify-content: center; align-items: center;}
         .btn-action { position: relative; width: 90px; height: 90px; border-radius: 50%; background: rgba(255, 0, 85, 0.2); border: 2px solid rgba(255, 0, 85, 0.6); box-shadow: 0 0 15px rgba(255, 0, 85, 0.3); font-size: 1.2rem; }
-        .btn-action:active { background: rgba(255, 0, 85, 0.6); box-shadow: 0 0 25px rgba(255, 0, 85, 0.8); }
     </style>
 </head>
 <body>
@@ -89,27 +77,23 @@
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         
         <div id="hud" class="hidden">Pont: <span id="scoreVal">0</span><span id="levelDisplay" class="hidden lvl-text">Szint: <span id="levelVal">1</span></span></div>
-        <div id="hud-controls" class="hidden">ESC: Menü<div class="tip hidden" id="aimTip">Kattints a fegyverhez!</div></div>
+        <div id="hud-controls" class="hidden">ESC: Menü<div class="tip hidden" id="aimTip"></div></div>
         
         <div id="mobileMenuBtn" class="hidden">MENÜ</div>
-
-        <!-- MOBILE VIRTUAL CONTROLS -->
         <div id="mobileControls" class="hidden">
             <div class="d-pad">
-                <div class="m-btn btn-up" data-key="up">▲</div>
-                <div class="m-btn btn-down" data-key="down">▼</div>
-                <div class="m-btn btn-left" data-key="left">◀</div>
-                <div class="m-btn btn-right" data-key="right">▶</div>
+                <div class="m-btn btn-up" data-key="up">▲</div><div class="m-btn btn-down" data-key="down">▼</div>
+                <div class="m-btn btn-left" data-key="left">◀</div><div class="m-btn btn-right" data-key="right">▶</div>
             </div>
-            <div class="action-pad">
-                <div class="m-btn btn-action" data-key="action">LŐ/UGRÁS</div>
-            </div>
+            <div class="action-pad"><div class="m-btn btn-action" data-key="action">LŐ/UGRÁS</div></div>
         </div>
 
         <div id="mainMenu" class="overlay">
             <h1>Arcade Hub</h1>
             <div class="btn-group">
-                <button onclick="window.app.startGame('soccer')" class="soccer-btn">Foci: Büntetőpárbaj</button>
+                <button onclick="window.app.startGame('soccer')" class="soccer-btn">Foci: Gép ellen</button>
+                <button onclick="window.app.startGame('soccer_1v1')" class="soccer-btn">Foci: 1v1 (Helyi)</button>
+                <button onclick="window.app.showOnlineLobby()" class="online-btn">Foci: ONLINE MULTI</button>
                 <button onclick="window.app.startGame('mine')" class="mc-btn">Mine2D (Építő!)</button>
                 <button onclick="window.app.startGame('royale')" style="border-color:#39ff14;">Neon Royale (3D FPS)</button>
                 <button onclick="window.app.startGame('slope')">Slope 3D</button>
@@ -118,366 +102,181 @@
                 <button onclick="window.app.startGame('dash')">Geometry Dash</button>
             </div>
             
-            <!-- FORRÁSKÓD LINK -->
             <div style="position: absolute; bottom: 15px; left: 15px; color: gray; font-size: 0.9rem;">
                 Forráskód: <a href="https://raw.githubusercontent.com/bionicrepo/infoora-games/refs/heads/main/index.html" target="_blank" style="color: gray; text-decoration: underline;">link</a>
             </div>
         </div>
 
+        <!-- ONLINE MULTIPLAYER LOBBY -->
+        <div id="onlineLobby" class="overlay hidden">
+            <h2>Online Foci</h2>
+            <div class="btn-group" id="lobbyBtns">
+                <button onclick="window.app.createOnlineRoom()" class="online-btn">Új szoba létrehozása (Te leszel a kapus)</button>
+                <p style="margin: 10px 0;">VAGY</p>
+                <input type="text" id="joinCodeInput" placeholder="6 jegyű kód" maxlength="6">
+                <button onclick="window.app.joinOnlineRoom()" class="mc-btn">Csatlakozás (Te leszel a rúgó)</button>
+                <button class="danger" onclick="window.app.showMenu()" style="margin-top: 20px;">Vissza</button>
+            </div>
+            <div id="roomWaiting" class="hidden text-center">
+                <p>A szobád kódja:</p>
+                <h1 id="generatedRoomCode" style="color:#00e5ff; font-size: 4rem;">---</h1>
+                <p>Várakozás az ellenfélre...</p>
+                <button class="danger" onclick="window.app.showMenu()" style="margin-top: 20px;">Mégse</button>
+            </div>
+        </div>
+
         <div id="gameOver" class="overlay hidden">
-            <h2>Game Over</h2>
-            <p>Elért pontszám: <span id="finalScoreVal">0</span></p>
+            <h2 id="goTitle">Game Over</h2>
+            <p id="goText">Elért pontszám: <span id="finalScoreVal">0</span></p>
             <div class="btn-group">
-                <button onclick="window.app.restartGame()">Újraindítás</button>
+                <button onclick="window.app.restartGame()" id="btnRestart">Újraindítás</button>
                 <button class="danger" onclick="window.app.showMenu()">Főmenü</button>
             </div>
         </div>
     </div>
 
     <script>
-        function drawSafeRoundRect(ctx, x, y, width, height, radius) {
-            ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius); ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height); ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius); ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath(); ctx.fill();
-        }
+        const SERVER_URL = 'https://foci-szerver.onrender.com';
+        let socket = null;
 
-        function drawMotoSide(ctx, x, y, scale, color) {
-            ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
-            ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-25, 10, 15, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(35, 10, 15, 0, Math.PI*2); ctx.fill();  
-            ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.arc(-25, 10, 8, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(35, 10, 8, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(-15, -5); ctx.lineTo(15, -10); ctx.lineTo(25, 10); ctx.lineTo(-20, 10); ctx.fill();
-            ctx.fillStyle = '#666'; ctx.fillRect(15, -25, 4, 20); ctx.fillRect(-35, 5, 20, 4); 
-            ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.arc(0, -20, 12, 0, Math.PI*2); ctx.fill(); 
-            ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(5, -35, 10, 0, Math.PI*2); ctx.fill();
-            ctx.restore();
-        }
-
-        function drawCarRear(ctx, x, y, scale, color) {
-            ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
-            let w = 80, h = 40, hw = w/2;
-            ctx.fillStyle = '#111'; ctx.fillRect(-hw - 5, -5, 15, 15); ctx.fillRect(hw - 10, -5, 15, 15);
-            ctx.fillStyle = color; drawSafeRoundRect(ctx, -hw, -25, w, 25, 5);
-            ctx.fillStyle = '#333'; ctx.beginPath(); ctx.moveTo(-hw + 10, -25); ctx.lineTo(hw - 10, -25); ctx.lineTo(hw - 20, -45); ctx.lineTo(-hw + 20, -45); ctx.fill();
-            ctx.fillStyle = '#87CEEB'; ctx.beginPath(); ctx.moveTo(-hw + 12, -27); ctx.lineTo(hw - 12, -27); ctx.lineTo(hw - 18, -42); ctx.lineTo(-hw + 18, -42); ctx.fill();
-            ctx.fillStyle = '#ff0000'; ctx.fillRect(-hw + 5, -15, 15, 8); ctx.fillRect(hw - 20, -15, 15, 8);
-            ctx.fillStyle = '#fff'; ctx.fillRect(-15, -12, 30, 6);
-            ctx.restore();
-        }
+        function drawSafeRoundRect(ctx, x, y, width, height, radius) { ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + width - radius, y); ctx.quadraticCurveTo(x + width, y, x + width, y + radius); ctx.lineTo(x + width, y + height - radius); ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height); ctx.lineTo(x + radius, y + height); ctx.quadraticCurveTo(x, y + height, x, y + height - radius); ctx.lineTo(x, y + radius); ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath(); ctx.fill(); }
+        function drawMotoSide(ctx, x, y, scale, color) { ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-25, 10, 15, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(35, 10, 15, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.arc(-25, 10, 8, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(35, 10, 8, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(-15, -5); ctx.lineTo(15, -10); ctx.lineTo(25, 10); ctx.lineTo(-20, 10); ctx.fill(); ctx.fillStyle = '#666'; ctx.fillRect(15, -25, 4, 20); ctx.fillRect(-35, 5, 20, 4); ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.arc(0, -20, 12, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(5, -35, 10, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
+        function drawCarRear(ctx, x, y, scale, color) { ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); let w = 80, h = 40, hw = w/2; ctx.fillStyle = '#111'; ctx.fillRect(-hw - 5, -5, 15, 15); ctx.fillRect(hw - 10, -5, 15, 15); ctx.fillStyle = color; drawSafeRoundRect(ctx, -hw, -25, w, 25, 5); ctx.fillStyle = '#333'; ctx.beginPath(); ctx.moveTo(-hw + 10, -25); ctx.lineTo(hw - 10, -25); ctx.lineTo(hw - 20, -45); ctx.lineTo(-hw + 20, -45); ctx.fill(); ctx.fillStyle = '#87CEEB'; ctx.beginPath(); ctx.moveTo(-hw + 12, -27); ctx.lineTo(hw - 12, -27); ctx.lineTo(hw - 18, -42); ctx.lineTo(-hw + 18, -42); ctx.fill(); ctx.fillStyle = '#ff0000'; ctx.fillRect(-hw + 5, -15, 15, 8); ctx.fillRect(hw - 20, -15, 15, 8); ctx.fillStyle = '#fff'; ctx.fillRect(-15, -12, 30, 6); ctx.restore(); }
 
         class InputHandler {
             constructor() {
                 this.keys = { up: false, down: false, left: false, right: false, action: false, q: false, e: false };
                 for(let i=1; i<=5; i++) this.keys['Digit'+i] = false;
-                
                 this.mouse = { x: 400, y: 300, down: false };
                 this.movementX = 0; this.movementY = 0;
                 this.consumes = { esc: false, click: false, up: false, down: false, left: false, right: false, action: false };
-
-                const keyMap = {
-                    'ArrowUp': 'up', 'KeyW': 'up', 'ArrowDown': 'down', 'KeyS': 'down',
-                    'ArrowLeft': 'left', 'KeyA': 'left', 'ArrowRight': 'right', 'KeyD': 'right',
-                    'Space': 'action', 'KeyQ': 'q', 'KeyE': 'e',
-                    'Digit1': 'Digit1', 'Digit2': 'Digit2', 'Digit3': 'Digit3', 'Digit4': 'Digit4', 'Digit5': 'Digit5'
-                };
-
-                window.addEventListener('keydown', e => { 
-                    if(keyMap[e.code]) {
-                        if (!this.keys[keyMap[e.code]]) {
-                            this.consumes[keyMap[e.code]] = true;
-                        }
-                        this.keys[keyMap[e.code]] = true; 
-                    }
-                    if(e.code === 'Escape') this.consumes.esc = true;
-                });
-                window.addEventListener('keyup', e => { 
-                    if(keyMap[e.code]) this.keys[keyMap[e.code]] = false; 
-                });
-
+                const keyMap = { 'ArrowUp': 'up', 'KeyW': 'up', 'ArrowDown': 'down', 'KeyS': 'down', 'ArrowLeft': 'left', 'KeyA': 'left', 'ArrowRight': 'right', 'KeyD': 'right', 'Space': 'action', 'KeyQ': 'q', 'KeyE': 'e', 'Digit1': 'Digit1', 'Digit2': 'Digit2', 'Digit3': 'Digit3', 'Digit4': 'Digit4', 'Digit5': 'Digit5' };
+                window.addEventListener('keydown', e => { if(keyMap[e.code]) { if (!this.keys[keyMap[e.code]]) this.consumes[keyMap[e.code]] = true; this.keys[keyMap[e.code]] = true; } if(e.code === 'Escape') this.consumes.esc = true; });
+                window.addEventListener('keyup', e => { if(keyMap[e.code]) this.keys[keyMap[e.code]] = false; });
                 let cvs = document.getElementById('gameCanvas');
-                
-                cvs.addEventListener('click', () => {
-                    if (window.app && window.app.activeGameName === 'royale') {
-                        if (document.pointerLockElement !== cvs) cvs.requestPointerLock();
-                    }
-                });
-
-                window.addEventListener('mousemove', e => {
-                    if (document.pointerLockElement === cvs) {
-                        this.movementX += e.movementX; this.movementY += e.movementY;
-                    }
-                    let r = cvs.getBoundingClientRect();
-                    this.mouse.x = (e.clientX - r.left) * (800 / r.width);
-                    this.mouse.y = (e.clientY - r.top) * (600 / r.height);
-                });
-                
-                window.addEventListener('mousedown', e => { 
-                    if(e.button === 0) { 
-                        this.mouse.down = true; 
-                        this.consumes.click = true; 
-                        if (window.app && window.app.activeGameName !== 'mine') {
-                            this.keys.action = true; 
-                            this.consumes.action = true; 
-                        }
-                    } 
-                });
-                window.addEventListener('mouseup', e => { 
-                    if(e.button === 0) { 
-                        this.mouse.down = false; 
-                        if (window.app && window.app.activeGameName !== 'mine') {
-                            this.keys.action = false;
-                        }
-                    } 
-                });
-
+                cvs.addEventListener('click', () => { if (window.app && window.app.activeGameName === 'royale') { if (document.pointerLockElement !== cvs) cvs.requestPointerLock(); } });
+                window.addEventListener('mousemove', e => { if (document.pointerLockElement === cvs) { this.movementX += e.movementX; this.movementY += e.movementY; } let r = cvs.getBoundingClientRect(); this.mouse.x = (e.clientX - r.left) * (800 / r.width); this.mouse.y = (e.clientY - r.top) * (600 / r.height); });
+                window.addEventListener('mousedown', e => { if(e.button === 0) { this.mouse.down = true; this.consumes.click = true; if (window.app && window.app.activeGameName !== 'mine') { this.keys.action = true; this.consumes.action = true; } } });
+                window.addEventListener('mouseup', e => { if(e.button === 0) { this.mouse.down = false; if (window.app && window.app.activeGameName !== 'mine') { this.keys.action = false; } } });
                 let lastTouchX = 0; let lastTouchY = 0;
-                cvs.addEventListener('touchstart', e => {
-                    if (e.target.classList.contains('m-btn') || e.target.id === 'mobileMenuBtn') return;
-                    let r = cvs.getBoundingClientRect();
-                    this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width);
-                    this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height);
-                    lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
-                    this.consumes.click = true;
-                });
-                cvs.addEventListener('touchmove', e => {
-                    if (e.target.classList.contains('m-btn') || e.target.id === 'mobileMenuBtn') return;
-                    e.preventDefault();
-                    let dx = e.touches[0].clientX - lastTouchX; let dy = e.touches[0].clientY - lastTouchY;
-                    this.movementX += dx * 2; this.movementY += dy * 2;
-                    lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
-                    
-                    let r = cvs.getBoundingClientRect();
-                    this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width);
-                    this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height);
-                }, { passive: false });
-
-                document.querySelectorAll('.m-btn').forEach(btn => {
-                    btn.addEventListener('touchstart', e => { 
-                        e.preventDefault(); 
-                        let key = btn.dataset.key;
-                        if(key === 'action') { 
-                            this.mouse.down = true; 
-                            this.keys.action = true; 
-                            this.consumes.action = true; 
-                        } else {
-                            if (!this.keys[key]) this.consumes[key] = true;
-                            this.keys[key] = true; 
-                        }
-                    });
-                    btn.addEventListener('touchend', e => { 
-                        e.preventDefault(); 
-                        let key = btn.dataset.key;
-                        if(key === 'action') { 
-                            this.mouse.down = false; 
-                            this.keys.action = false; 
-                        } else {
-                            this.keys[key] = false; 
-                        }
-                    });
-                });
+                cvs.addEventListener('touchstart', e => { if (e.target.classList.contains('m-btn') || e.target.id === 'mobileMenuBtn') return; let r = cvs.getBoundingClientRect(); this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width); this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height); lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY; this.consumes.click = true; });
+                cvs.addEventListener('touchmove', e => { if (e.target.classList.contains('m-btn') || e.target.id === 'mobileMenuBtn') return; e.preventDefault(); let dx = e.touches[0].clientX - lastTouchX; let dy = e.touches[0].clientY - lastTouchY; this.movementX += dx * 2; this.movementY += dy * 2; lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY; let r = cvs.getBoundingClientRect(); this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width); this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height); }, { passive: false });
+                document.querySelectorAll('.m-btn').forEach(btn => { btn.addEventListener('touchstart', e => { e.preventDefault(); let key = btn.dataset.key; if(key === 'action') { this.mouse.down = true; this.keys.action = true; this.consumes.action = true; } else { if (!this.keys[key]) this.consumes[key] = true; this.keys[key] = true; } }); btn.addEventListener('touchend', e => { e.preventDefault(); let key = btn.dataset.key; if(key === 'action') { this.mouse.down = false; this.keys.action = false; } else { this.keys[key] = false; } }); });
             }
-            isDown(k) { return this.keys[k] === true || (k === 'action' && this.mouse.down && window.app.activeGameName !== 'mine'); }
+            isDown(k) { return this.keys[k] === true || (k === 'action' && this.mouse.down && window.app && window.app.activeGameName !== 'mine'); }
             consume(k) { if(this.consumes[k]) { this.consumes[k] = false; return true; } return false; }
             clearConsumes() { for(let k in this.consumes) this.consumes[k] = false; }
         }
 
         class MenuBackground {
-            constructor(canvas, ctx) {
-                this.canvas = canvas; this.ctx = ctx; this.time = 0; this.buildings = [];
-                let x = 0;
-                while(x < 1200) {
-                    let w = 40 + Math.random() * 80; let h = 100 + Math.random() * 250; let windows = [];
-                    for(let wy = 10; wy < h - 20; wy += 20) { 
-                        for(let wx = 10; wx < w - 15; wx += 15) { if(Math.random() > 0.6) windows.push({x: wx, y: wy}); } 
-                    }
-                    this.buildings.push({ x: x, w: w, h: h, windows: windows, neon: Math.random() > 0.5 ? '#00e5ff' : '#ff0055' });
-                    x += w + 5 + Math.random() * 20;
-                }
-            }
+            constructor(canvas, ctx) { this.canvas = canvas; this.ctx = ctx; this.time = 0; this.buildings = []; let x = 0; while(x < 1200) { let w = 40 + Math.random() * 80; let h = 100 + Math.random() * 250; let windows = []; for(let wy = 10; wy < h - 20; wy += 20) { for(let wx = 10; wx < w - 15; wx += 15) { if(Math.random() > 0.6) windows.push({x: wx, y: wy}); } } this.buildings.push({ x: x, w: w, h: h, windows: windows, neon: Math.random() > 0.5 ? '#00e5ff' : '#ff0055' }); x += w + 5 + Math.random() * 20; } }
             update(dt) { this.time += dt; }
-            draw() {
-                let w = this.canvas.width; let h = this.canvas.height; let horizon = (h / 2) + 50;
-                let skyGrad = this.ctx.createLinearGradient(0, 0, 0, horizon);
-                skyGrad.addColorStop(0, '#020014'); skyGrad.addColorStop(1, '#2d0036'); 
-                this.ctx.fillStyle = skyGrad; this.ctx.fillRect(0, 0, w, horizon);
-
-                this.ctx.save(); this.ctx.translate(w/2, horizon - 80);
-                let sunGrad = this.ctx.createLinearGradient(0, -80, 0, 80);
-                sunGrad.addColorStop(0, '#ff007f'); sunGrad.addColorStop(1, '#ffc000');
-                this.ctx.fillStyle = sunGrad; this.ctx.beginPath(); this.ctx.arc(0, 0, 100, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.fillStyle = '#2d0036'; for(let i=0; i<6; i++) { this.ctx.fillRect(-100, 20 + i*15, 200, 2 + i*1.5); }
-                this.ctx.restore();
-
-                let bgOffset = (this.time * 20) % 1200;
-                this.ctx.save();
-                for(let loop = 0; loop < 2; loop++) {
-                    this.ctx.translate(loop === 1 ? 1200 : -bgOffset, 0);
-                    for(let b of this.buildings) {
-                        this.ctx.fillStyle = '#050510'; this.ctx.fillRect(b.x, horizon - b.h, b.w, b.h);
-                        this.ctx.strokeStyle = b.neon; this.ctx.lineWidth = 1; this.ctx.strokeRect(b.x, horizon - b.h, b.w, b.h);
-                        this.ctx.fillStyle = b.neon;
-                        for(let win of b.windows) {
-                            this.ctx.globalAlpha = 0.5 + Math.sin(this.time * 5 + win.x) * 0.5;
-                            this.ctx.fillRect(b.x + win.x, horizon - b.h + win.y, 6, 10);
-                        }
-                        this.ctx.globalAlpha = 1.0;
-                    }
-                }
-                this.ctx.restore();
-
-                this.ctx.fillStyle = '#050014'; this.ctx.fillRect(0, horizon, w, h - horizon);
-                this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 1.5;
-                for(let i=0; i<20; i++) {
-                    let z = ((i*20) - (this.time * 50) % 20); if (z < 1) z = 1; 
-                    let y = horizon + (2000 / z);
-                    if (y > horizon && y < h) { this.ctx.beginPath(); this.ctx.moveTo(0, y); this.ctx.lineTo(w, y); this.ctx.globalAlpha = Math.max(0, 1 - (z/400)); this.ctx.stroke(); }
-                }
-                this.ctx.globalAlpha = 0.6; let vpX = w/2; let vpY = horizon;
-                for(let i=-20; i<20; i++) { this.ctx.beginPath(); this.ctx.moveTo(vpX, vpY); this.ctx.lineTo(vpX + (i * 100), h); this.ctx.stroke(); }
-                this.ctx.globalAlpha = 1.0;
-                this.ctx.fillStyle = '#ff0055'; this.ctx.shadowColor = '#ff0055'; this.ctx.shadowBlur = 10;
-                this.ctx.fillRect(0, horizon, w, 2); this.ctx.shadowBlur = 0;
-            }
+            draw() { let w = this.canvas.width; let h = this.canvas.height; let horizon = (h / 2) + 50; let skyGrad = this.ctx.createLinearGradient(0, 0, 0, horizon); skyGrad.addColorStop(0, '#020014'); skyGrad.addColorStop(1, '#2d0036'); this.ctx.fillStyle = skyGrad; this.ctx.fillRect(0, 0, w, horizon); this.ctx.save(); this.ctx.translate(w/2, horizon - 80); let sunGrad = this.ctx.createLinearGradient(0, -80, 0, 80); sunGrad.addColorStop(0, '#ff007f'); sunGrad.addColorStop(1, '#ffc000'); this.ctx.fillStyle = sunGrad; this.ctx.beginPath(); this.ctx.arc(0, 0, 100, 0, Math.PI*2); this.ctx.fill(); this.ctx.fillStyle = '#2d0036'; for(let i=0; i<6; i++) { this.ctx.fillRect(-100, 20 + i*15, 200, 2 + i*1.5); } this.ctx.restore(); let bgOffset = (this.time * 20) % 1200; this.ctx.save(); for(let loop = 0; loop < 2; loop++) { this.ctx.translate(loop === 1 ? 1200 : -bgOffset, 0); for(let b of this.buildings) { this.ctx.fillStyle = '#050510'; this.ctx.fillRect(b.x, horizon - b.h, b.w, b.h); this.ctx.strokeStyle = b.neon; this.ctx.lineWidth = 1; this.ctx.strokeRect(b.x, horizon - b.h, b.w, b.h); this.ctx.fillStyle = b.neon; for(let win of b.windows) { this.ctx.globalAlpha = 0.5 + Math.sin(this.time * 5 + win.x) * 0.5; this.ctx.fillRect(b.x + win.x, horizon - b.h + win.y, 6, 10); } this.ctx.globalAlpha = 1.0; } } this.ctx.restore(); this.ctx.fillStyle = '#050014'; this.ctx.fillRect(0, horizon, w, h - horizon); this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 1.5; for(let i=0; i<20; i++) { let z = ((i*20) - (this.time * 50) % 20); if (z < 1) z = 1; let y = horizon + (2000 / z); if (y > horizon && y < h) { this.ctx.beginPath(); this.ctx.moveTo(0, y); this.ctx.lineTo(w, y); this.ctx.globalAlpha = Math.max(0, 1 - (z/400)); this.ctx.stroke(); } } this.ctx.globalAlpha = 0.6; let vpX = w/2; let vpY = horizon; for(let i=-20; i<20; i++) { this.ctx.beginPath(); this.ctx.moveTo(vpX, vpY); this.ctx.lineTo(vpX + (i * 100), h); this.ctx.stroke(); } this.ctx.globalAlpha = 1.0; this.ctx.fillStyle = '#ff0055'; this.ctx.shadowColor = '#ff0055'; this.ctx.shadowBlur = 10; this.ctx.fillRect(0, horizon, w, 2); this.ctx.shadowBlur = 0; }
         }
 
         // ==========================================
-        // FOCI - BÜNTETŐPÁRBAJ
+        // FOCI - OFFLINE ÉS ONLINE MÓD
         // ==========================================
         class SoccerGame {
-            constructor(canvas, ctx, input) { 
-                this.canvas = canvas; 
-                this.ctx = ctx; 
-                this.input = input; 
+            constructor(canvas, ctx, input, mode = 'bot', onlineRole = null, roomCode = null) { 
+                this.canvas = canvas; this.ctx = ctx; this.input = input; 
+                this.mode = mode; // 'bot', '1v1', 'online'
+                this.onlineRole = onlineRole; // 'goalie' vagy 'kicker'
+                this.roomCode = roomCode;
                 this.reset(); 
             }
-            
-            reset() {
-                this.score = 0;
-                this.isAlive = true;
-                this.baseGoalieSpeed = 250;
-                this.resetTurn();
-            }
-            
+            reset() { this.score = 0; this.isAlive = true; this.message = ""; this.resetTurn(); }
             resetTurn() {
                 this.ball = { x: 400, y: 500, r: 12, vx: 0, vy: 0, state: 'aim' };
                 this.aimAngle = -Math.PI / 2;
-                
-                let gDir = Math.random() > 0.5 ? 1 : -1;
-                this.goalie = { x: 400, y: 120, w: 80, h: 20, vx: this.baseGoalieSpeed + (this.score * 40), dir: gDir };
+                this.goalie = { x: 400, y: 120, w: 80, h: 20, vx: 250 + (this.score * 40), dir: Math.random() > 0.5 ? 1 : -1 };
                 this.goal = { x: 200, y: 50, w: 400, h: 60 };
-                
                 this.aimCooldown = 0.2; 
                 this.input.clearConsumes();
             }
-            
             update(dt) {
                 if (!this.isAlive) return;
-
                 if (this.aimCooldown > 0) this.aimCooldown -= dt;
 
-                this.goalie.x += this.goalie.vx * this.goalie.dir * dt;
-                if (this.goalie.x - this.goalie.w/2 < this.goal.x) { 
-                    this.goalie.x = this.goal.x + this.goalie.w/2; this.goalie.dir *= -1; 
-                }
-                if (this.goalie.x + this.goalie.w/2 > this.goal.x + this.goal.w) { 
-                    this.goalie.x = this.goal.x + this.goal.w - this.goalie.w/2; this.goalie.dir *= -1; 
+                // KAPUS MOZGÁS
+                if (this.mode === 'bot') {
+                    this.goalie.x += this.goalie.vx * this.goalie.dir * dt;
+                } else if (this.mode === '1v1' || (this.mode === 'online' && this.onlineRole === 'goalie')) {
+                    let gMove = 0;
+                    if (this.input.isDown('left')) gMove -= 1;
+                    if (this.input.isDown('right')) gMove += 1;
+                    this.goalie.x += gMove * 500 * dt;
+
+                    if (this.mode === 'online' && socket) {
+                        socket.emit('updateGoalie', { room: this.roomCode, x: this.goalie.x });
+                    }
                 }
 
+                if (this.mode !== 'online' || this.onlineRole === 'goalie') {
+                    if (this.goalie.x - this.goalie.w/2 < this.goal.x) { this.goalie.x = this.goal.x + this.goalie.w/2; if(this.mode === 'bot') this.goalie.dir *= -1; }
+                    if (this.goalie.x + this.goalie.w/2 > this.goal.x + this.goal.w) { this.goalie.x = this.goal.x + this.goal.w - this.goalie.w/2; if(this.mode === 'bot') this.goalie.dir *= -1; }
+                }
+
+                // LABDA LÖVÉS
                 if (this.ball.state === 'aim') {
-                    let mx = this.input.mouse.x;
-                    let my = this.input.mouse.y;
-                    
-                    if (my >= this.ball.y - 20) my = this.ball.y - 20;
-                    
-                    let dx = mx - this.ball.x;
-                    let dy = my - this.ball.y;
-                    this.aimAngle = Math.atan2(dy, dx);
+                    if (this.mode !== 'online' || this.onlineRole === 'kicker') {
+                        let mx = this.input.mouse.x; let my = this.input.mouse.y;
+                        if (my >= this.ball.y - 20) my = this.ball.y - 20;
+                        this.aimAngle = Math.atan2(my - this.ball.y, mx - this.ball.x);
 
-                    if (this.aimCooldown <= 0 && (this.input.consume('action') || this.input.consume('click'))) {
-                        this.ball.state = 'shoot';
-                        let power = 1000;
-                        this.ball.vx = Math.cos(this.aimAngle) * power;
-                        this.ball.vy = Math.sin(this.aimAngle) * power;
+                        if (this.aimCooldown <= 0 && (this.input.consume('action') || this.input.consume('click'))) {
+                            this.ball.state = 'shoot';
+                            let power = 1000;
+                            this.ball.vx = Math.cos(this.aimAngle) * power;
+                            this.ball.vy = Math.sin(this.aimAngle) * power;
+
+                            if (this.mode === 'online' && socket) {
+                                socket.emit('shootBall', { room: this.roomCode, vx: this.ball.vx, vy: this.ball.vy, x: this.ball.x, y: this.ball.y });
+                            }
+                        }
                     }
                 } else if (this.ball.state === 'shoot') {
                     this.ball.x += this.ball.vx * dt;
                     this.ball.y += this.ball.vy * dt;
 
-                    let r = this.ball.r;
-                    let gx = this.goalie.x - this.goalie.w/2;
-                    let gy = this.goalie.y - this.goalie.h/2;
+                    let r = this.ball.r, gx = this.goalie.x - this.goalie.w/2, gy = this.goalie.y - this.goalie.h/2;
                     
-                    if (this.ball.x + r > gx && this.ball.x - r < gx + this.goalie.w &&
-                        this.ball.y + r > gy && this.ball.y - r < gy + this.goalie.h) {
-                        this.isAlive = false; 
+                    if (this.ball.x + r > gx && this.ball.x - r < gx + this.goalie.w && this.ball.y + r > gy && this.ball.y - r < gy + this.goalie.h) {
+                        this.isAlive = false; this.message = "VÉDÉS!";
                     }
 
                     if (this.ball.y < this.goal.y + this.goal.h) {
                         if (this.ball.x > this.goal.x && this.ball.x < this.goal.x + this.goal.w) {
-                            this.score++;
-                            this.resetTurn();
+                            this.score++; this.message = "GÓL!"; this.resetTurn();
                         } else {
-                            this.isAlive = false; 
+                            this.isAlive = false; this.message = "KAPUFELÉ!";
                         }
                     }
-                    
-                    if(this.ball.x < 0 || this.ball.x > 800 || this.ball.y < 0) this.isAlive = false;
+                    if(this.ball.x < 0 || this.ball.x > 800 || this.ball.y < 0) { this.isAlive = false; this.message = "KINT!"; }
                 }
             }
             
             draw() {
-                this.ctx.fillStyle = '#2E8B57';
-                this.ctx.fillRect(0, 0, 800, 600);
-                this.ctx.fillStyle = '#228B22';
-                for(let i=0; i<800; i+=100) this.ctx.fillRect(i, 0, 50, 600);
-
-                this.ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-                this.ctx.lineWidth = 4;
-                this.ctx.strokeRect(100, 50, 600, 300);
-                this.ctx.beginPath(); this.ctx.arc(400, 350, 80, 0, Math.PI); this.ctx.stroke();
+                this.ctx.fillStyle = '#2E8B57'; this.ctx.fillRect(0, 0, 800, 600);
+                this.ctx.fillStyle = '#228B22'; for(let i=0; i<800; i+=100) this.ctx.fillRect(i, 0, 50, 600);
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.7)'; this.ctx.lineWidth = 4;
+                this.ctx.strokeRect(100, 50, 600, 300); this.ctx.beginPath(); this.ctx.arc(400, 350, 80, 0, Math.PI); this.ctx.stroke();
                 this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(400, 500, 5, 0, Math.PI*2); this.ctx.fill();
 
-                this.ctx.fillStyle = 'rgba(255,255,255,0.15)';
-                this.ctx.fillRect(this.goal.x, this.goal.y, this.goal.w, this.goal.h);
-                this.ctx.strokeStyle = '#fff';
-                this.ctx.lineWidth = 6;
-                this.ctx.strokeRect(this.goal.x, this.goal.y, this.goal.w, this.goal.h);
-                this.ctx.lineWidth = 1;
-                for(let i=this.goal.x; i<this.goal.x+this.goal.w; i+=15) {
-                    this.ctx.beginPath(); this.ctx.moveTo(i, this.goal.y); this.ctx.lineTo(i, this.goal.y+this.goal.h); this.ctx.stroke();
-                }
-                for(let i=this.goal.y; i<this.goal.y+this.goal.h; i+=15) {
-                    this.ctx.beginPath(); this.ctx.moveTo(this.goal.x, i); this.ctx.lineTo(this.goal.x+this.goal.w, i); this.ctx.stroke();
-                }
+                this.ctx.fillStyle = 'rgba(255,255,255,0.15)'; this.ctx.fillRect(this.goal.x, this.goal.y, this.goal.w, this.goal.h);
+                this.ctx.strokeStyle = '#fff'; this.ctx.lineWidth = 6; this.ctx.strokeRect(this.goal.x, this.goal.y, this.goal.w, this.goal.h);
 
-                let gx = this.goalie.x - this.goalie.w/2;
-                let gy = this.goalie.y - this.goalie.h/2;
-                this.ctx.fillStyle = '#e74c3c';
-                this.ctx.fillRect(gx, gy, this.goalie.w, this.goalie.h);
-                this.ctx.fillStyle = '#f1c40f';
-                this.ctx.beginPath(); this.ctx.arc(gx - 5, this.goalie.y, 8, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.beginPath(); this.ctx.arc(gx + this.goalie.w + 5, this.goalie.y, 8, 0, Math.PI*2); this.ctx.fill();
+                let gx = this.goalie.x - this.goalie.w/2, gy = this.goalie.y - this.goalie.h/2;
+                this.ctx.fillStyle = '#e74c3c'; this.ctx.fillRect(gx, gy, this.goalie.w, this.goalie.h);
+                this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(this.ball.x, this.ball.y, this.ball.r, 0, Math.PI*2); this.ctx.fill();
 
-                this.ctx.fillStyle = '#fff';
-                this.ctx.beginPath(); this.ctx.arc(this.ball.x, this.ball.y, this.ball.r, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.fillStyle = '#111';
-                this.ctx.beginPath(); this.ctx.arc(this.ball.x, this.ball.y, this.ball.r * 0.4, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.beginPath(); this.ctx.arc(this.ball.x - 6, this.ball.y - 6, this.ball.r * 0.25, 0, Math.PI*2); this.ctx.fill();
-                this.ctx.beginPath(); this.ctx.arc(this.ball.x + 6, this.ball.y + 6, this.ball.r * 0.25, 0, Math.PI*2); this.ctx.fill();
-
-                if (this.ball.state === 'aim' && this.aimCooldown <= 0) {
-                    this.ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
-                    this.ctx.lineWidth = 4;
-                    this.ctx.setLineDash([10, 10]);
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(this.ball.x, this.ball.y);
+                if (this.ball.state === 'aim' && this.aimCooldown <= 0 && (this.mode !== 'online' || this.onlineRole === 'kicker')) {
+                    this.ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)'; this.ctx.lineWidth = 4; this.ctx.setLineDash([10, 10]);
+                    this.ctx.beginPath(); this.ctx.moveTo(this.ball.x, this.ball.y);
                     this.ctx.lineTo(this.ball.x + Math.cos(this.aimAngle) * 150, this.ball.y + Math.sin(this.aimAngle) * 150);
-                    this.ctx.stroke();
-                    this.ctx.setLineDash([]);
+                    this.ctx.stroke(); this.ctx.setLineDash([]);
                 }
             }
-            
             getScore() { return this.score; }
         }
 
@@ -487,31 +286,23 @@
         class MineGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
             reset() {
-                this.tileSize = 30; this.cols = 100; this.rows = 60;
-                this.map = [];
+                this.tileSize = 30; this.cols = 100; this.rows = 60; this.map = [];
                 for(let x=0; x<this.cols; x++) {
-                    this.map[x] = [];
-                    let h = 30 + Math.floor(Math.sin(x/5)*3 + Math.sin(x/2)*2);
+                    this.map[x] = []; let h = 30 + Math.floor(Math.sin(x/5)*3 + Math.sin(x/2)*2);
                     for(let y=0; y<this.rows; y++) {
-                        if (y < h) this.map[x][y] = 0;
-                        else if (y === h) this.map[x][y] = 1; 
-                        else if (y > h && y < h + 4) this.map[x][y] = 2; 
-                        else this.map[x][y] = 3; 
+                        if (y < h) this.map[x][y] = 0; else if (y === h) this.map[x][y] = 1; else if (y > h && y < h + 4) this.map[x][y] = 2; else this.map[x][y] = 3; 
                     }
                 }
                 for(let x=3; x<this.cols-3; x++) {
                     let h = 30 + Math.floor(Math.sin(x/5)*3 + Math.sin(x/2)*2);
                     if (Math.random() < 0.08) { 
                         this.map[x][h-1] = 4; this.map[x][h-2] = 4; 
-                        this.map[x-1][h-3] = 5; this.map[x][h-3] = 5; this.map[x+1][h-3] = 5; 
-                        this.map[x][h-4] = 5; 
+                        this.map[x-1][h-3] = 5; this.map[x][h-3] = 5; this.map[x+1][h-3] = 5; this.map[x][h-4] = 5; 
                     }
                 }
                 this.p = { x: 50 * this.tileSize, y: 10 * this.tileSize, w: 20, h: 38, vx: 0, vy: 0 };
                 this.cam = { x: this.p.x - 400, y: this.p.y - 300 };
-                this.selectedBlock = 4; 
-                this.colors = [null, '#4CAF50', '#795548', '#9E9E9E', '#5D4037', '#2E7D32'];
-                this.isAlive = true;
+                this.selectedBlock = 4; this.colors = [null, '#4CAF50', '#795548', '#9E9E9E', '#5D4037', '#2E7D32']; this.isAlive = true;
             }
             getBlock(tx, ty) { if(tx>=0 && tx<this.cols && ty>=0 && ty<this.rows) return this.map[tx][ty]; return 3; }
             setBlock(tx, ty, val) { if(tx>=0 && tx<this.cols && ty>=0 && ty<this.rows) this.map[tx][ty] = val; }
@@ -525,9 +316,7 @@
             }
             update(dt) {
                 for(let i=1; i<=5; i++) { if(this.input.keys['Digit'+i]) this.selectedBlock = i; }
-                let move = 0;
-                if(this.input.isDown('left')) move -= 1;
-                if(this.input.isDown('right')) move += 1;
+                let move = 0; if(this.input.isDown('left')) move -= 1; if(this.input.isDown('right')) move += 1;
                 this.p.vx = move * 200; this.p.x += this.p.vx * dt;
                 if(this.collide(this.p.x, this.p.y)) this.p.x -= this.p.vx * dt;
                 this.p.vy += 1500 * dt; this.p.y += this.p.vy * dt;
@@ -541,8 +330,7 @@
                 if(this.input.consume('click')) {
                     let screenX = this.input.mouse.x; let screenY = this.input.mouse.y;
                     if (screenY >= 530 && screenX >= 290 && screenX <= 510) {
-                        let idx = Math.floor((screenX - 300) / 40);
-                        if (idx >= 0 && idx < 5) { this.selectedBlock = idx + 1; return; }
+                        let idx = Math.floor((screenX - 300) / 40); if (idx >= 0 && idx < 5) { this.selectedBlock = idx + 1; return; }
                     }
                     let wx = screenX + this.cam.x; let wy = screenY + this.cam.y;
                     let tx = Math.floor(wx / this.tileSize); let ty = Math.floor(wy / this.tileSize);
@@ -557,25 +345,20 @@
                         }
                     }
                 }
-                this.cam.x += (this.p.x - 400 - this.cam.x) * 5 * dt;
-                this.cam.y += (this.p.y - 300 - this.cam.y) * 5 * dt;
+                this.cam.x += (this.p.x - 400 - this.cam.x) * 5 * dt; this.cam.y += (this.p.y - 300 - this.cam.y) * 5 * dt;
                 if(this.p.y > this.rows * this.tileSize + 300) this.isAlive = false;
             }
             draw() {
                 this.ctx.fillStyle = '#87CEEB'; this.ctx.fillRect(0,0,800,600);
                 this.ctx.save(); this.ctx.translate(-this.cam.x, -this.cam.y);
-                let startX = Math.max(0, Math.floor(this.cam.x / this.tileSize));
-                let endX = Math.min(this.cols, Math.ceil((this.cam.x + 800) / this.tileSize));
-                let startY = Math.max(0, Math.floor(this.cam.y / this.tileSize));
-                let endY = Math.min(this.rows, Math.ceil((this.cam.y + 600) / this.tileSize));
+                let startX = Math.max(0, Math.floor(this.cam.x / this.tileSize)), endX = Math.min(this.cols, Math.ceil((this.cam.x + 800) / this.tileSize));
+                let startY = Math.max(0, Math.floor(this.cam.y / this.tileSize)), endY = Math.min(this.rows, Math.ceil((this.cam.y + 600) / this.tileSize));
                 for(let x = startX; x < endX; x++) {
                     for(let y = startY; y < endY; y++) {
                         let b = this.map[x][y];
                         if(b !== 0) {
-                            this.ctx.fillStyle = this.colors[b];
-                            this.ctx.fillRect(x*this.tileSize, y*this.tileSize, this.tileSize+1, this.tileSize+1);
-                            this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-                            this.ctx.strokeRect(x*this.tileSize, y*this.tileSize, this.tileSize, this.tileSize);
+                            this.ctx.fillStyle = this.colors[b]; this.ctx.fillRect(x*this.tileSize, y*this.tileSize, this.tileSize+1, this.tileSize+1);
+                            this.ctx.strokeStyle = 'rgba(0,0,0,0.1)'; this.ctx.strokeRect(x*this.tileSize, y*this.tileSize, this.tileSize, this.tileSize);
                             if (b === 1) { this.ctx.fillStyle = '#81C784'; this.ctx.fillRect(x*this.tileSize, y*this.tileSize, this.tileSize, 6); }
                         }
                     }
@@ -584,21 +367,15 @@
                 this.ctx.fillStyle = '#fff'; this.ctx.fillRect(this.p.x + (this.p.vx > 0 ? 12 : 4), this.p.y + 6, 4, 4);
                 let wx = this.input.mouse.x + this.cam.x; let wy = this.input.mouse.y + this.cam.y;
                 let tx = Math.floor(wx / this.tileSize); let ty = Math.floor(wy / this.tileSize);
-                if(Math.hypot(wx - (this.p.x+this.p.w/2), wy - (this.p.y+this.p.h/2)) < 180) {
-                    this.ctx.strokeStyle = '#fff'; this.ctx.lineWidth = 2;
-                    this.ctx.strokeRect(tx*this.tileSize, ty*this.tileSize, this.tileSize, this.tileSize);
-                }
+                if(Math.hypot(wx - (this.p.x+this.p.w/2), wy - (this.p.y+this.p.h/2)) < 180) { this.ctx.strokeStyle = '#fff'; this.ctx.lineWidth = 2; this.ctx.strokeRect(tx*this.tileSize, ty*this.tileSize, this.tileSize, this.tileSize); }
                 this.ctx.restore();
                 this.ctx.fillStyle = 'rgba(0,0,0,0.6)'; this.ctx.fillRect(290, 530, 220, 60);
                 for(let i=1; i<=5; i++) {
-                    let bx = 300 + (i-1)*40;
-                    this.ctx.fillStyle = this.colors[i]; this.ctx.fillRect(bx, 545, 32, 32);
+                    let bx = 300 + (i-1)*40; this.ctx.fillStyle = this.colors[i]; this.ctx.fillRect(bx, 545, 32, 32);
                     if (i === 1) { this.ctx.fillStyle = '#81C784'; this.ctx.fillRect(bx, 545, 32, 6); } 
                     if(this.selectedBlock === i) { this.ctx.strokeStyle = '#00e5ff'; this.ctx.lineWidth = 3; this.ctx.strokeRect(bx, 545, 32, 32); }
                 }
-                this.ctx.fillStyle = '#fff'; this.ctx.font = '12px Tahoma'; this.ctx.textAlign = 'center';
-                this.ctx.fillText('HOTBAR (1-5 gomb vagy érintés)', 400, 520);
-                this.ctx.textAlign = 'left';
+                this.ctx.fillStyle = '#fff'; this.ctx.font = '12px Tahoma'; this.ctx.textAlign = 'center'; this.ctx.fillText('HOTBAR (1-5 gomb vagy érintés)', 400, 520); this.ctx.textAlign = 'left';
             }
             getScore() { return 0; }
         }
@@ -646,10 +423,8 @@
                 }
                 this.p.angle = this.cam.yaw; 
                 let moveX = 0, moveZ = 0;
-                if(this.input.isDown('left')) moveX -= 1;
-                if(this.input.isDown('right')) moveX += 1;
-                if(this.input.isDown('up')) moveZ += 1; 
-                if(this.input.isDown('down')) moveZ -= 1; 
+                if(this.input.isDown('left')) moveX -= 1; if(this.input.isDown('right')) moveX += 1;
+                if(this.input.isDown('up')) moveZ += 1; if(this.input.isDown('down')) moveZ -= 1; 
                 if(moveX !== 0 || moveZ !== 0) {
                     let len = Math.hypot(moveX, moveZ); moveX /= len; moveZ /= len;
                     let sinY = Math.sin(this.cam.yaw); let cosY = Math.cos(this.cam.yaw);
@@ -799,24 +574,16 @@
             update(dt) { 
                 if(!this.isAlive) return; 
                 this.score += 5 * dt; this.speed += 2 * dt; this.posZ += this.speed * dt; this.trackCurve = Math.sin(this.posZ / 600) * 1.5; 
-                
                 if(this.input.isDown('left')) this.playerX -= 1.8 * dt; 
                 if(this.input.isDown('right')) this.playerX += 1.8 * dt; 
-                
-                if(this.playerX < -0.75) this.playerX = -0.75;
-                if(this.playerX > 0.75) this.playerX = 0.75;
-
+                if(this.playerX < -0.75) this.playerX = -0.75; if(this.playerX > 0.75) this.playerX = 0.75;
                 this.spawnTimer += dt; if(this.spawnTimer > 1.2) { let lane = Math.floor(Math.random() * 3) - 1; this.enemies.push({ x: lane * 0.8, z: this.posZ + 600, speed: this.speed * 0.6 }); this.spawnTimer = 0; } 
-                
                 for(let i = this.enemies.length-1; i>=0; i--) { 
                     let e = this.enemies[i]; e.z += e.speed * dt; if(e.z < this.posZ - 100) { this.enemies.splice(i, 1); continue; } 
                     let relZ = e.z - this.posZ; 
-                    
-                    // JAVÍTÁS: Teljesen "lapos" és szűk hitbox a grafikához igazítva
-                    // A szélesség just 0.18, a hossza pedig drasztikusan lerövidítve (±4 logikai egység)!
+                    // Lapos és szűk hitbox a grafikához igazítva
                     let pLeft = this.playerX - 0.18, pRight = this.playerX + 0.18, pBack = -4, pFront = 4; 
                     let eLeft = e.x - 0.18, eRight = e.x + 0.18, eBack = relZ - 4, eFront = relZ + 4; 
-                    
                     if((pRight > eLeft) && (pLeft < eRight) && (pFront > eBack) && (pBack < eFront)) this.isAlive = false; 
                 } 
             }
@@ -851,45 +618,99 @@
                 this.canvas = document.getElementById('gameCanvas'); 
                 this.ctx = this.canvas.getContext('2d');
                 this.input = new InputHandler();
+                
                 this.uiMenu = document.getElementById('mainMenu'); 
+                this.uiOnlineLobby = document.getElementById('onlineLobby');
                 this.uiGameOver = document.getElementById('gameOver');
                 this.uiHud = document.getElementById('hud'); 
-                this.uiControls = document.getElementById('hud-controls');
-                this.elScore = document.getElementById('scoreVal'); 
-                this.elFinalScore = document.getElementById('finalScoreVal');
-                this.elLevelDisp = document.getElementById('levelDisplay'); 
-                this.elLevelVal = document.getElementById('levelVal');
                 this.mobileUI = document.getElementById('mobileControls');
+                this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
                 this.aimTip = document.getElementById('aimTip');
                 
-                this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
                 this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
+                
                 const showMenuHandler = (e) => { e.preventDefault(); this.showMenu(); };
                 this.mobileMenuBtn.addEventListener('touchstart', showMenuHandler);
                 this.mobileMenuBtn.addEventListener('mousedown', showMenuHandler);
 
                 this.menuBg = new MenuBackground(this.canvas, this.ctx);
-                this.activeGame = null; 
-                this.activeGameName = ''; 
+                this.activeGame = null; this.activeGameName = ''; 
                 this.lastTime = performance.now();
                 
+                this.setupSockets();
                 requestAnimationFrame(t => this.loop(t));
+            }
+
+            setupSockets() {
+                if (typeof io !== 'undefined') {
+                    socket = io(SERVER_URL);
+                    
+                    socket.on('roomCreated', (code) => {
+                        document.getElementById('lobbyBtns').classList.add('hidden');
+                        document.getElementById('roomWaiting').classList.remove('hidden');
+                        document.getElementById('generatedRoomCode').innerText = code;
+                    });
+
+                    socket.on('gameStart', (data) => {
+                        this.startGame('soccer_online', data.role, data.room);
+                    });
+
+                    socket.on('errorMsg', (msg) => { alert(msg); });
+
+                    socket.on('goalieMoved', (x) => {
+                        if (this.activeGame && this.activeGameName === 'soccer_online' && this.activeGame.onlineRole === 'kicker') {
+                            this.activeGame.goalie.x = x;
+                        }
+                    });
+
+                    socket.on('ballShot', (data) => {
+                        if (this.activeGame && this.activeGameName === 'soccer_online' && this.activeGame.onlineRole === 'goalie') {
+                            this.activeGame.ball.x = data.x;
+                            this.activeGame.ball.y = data.y;
+                            this.activeGame.ball.vx = data.vx;
+                            this.activeGame.ball.vy = data.vy;
+                            this.activeGame.ball.state = 'shoot';
+                        }
+                    });
+
+                    socket.on('opponentLeft', () => {
+                        if(this.activeGame && this.activeGameName === 'soccer_online') {
+                            alert("Az ellenfél kilépett!");
+                            this.showMenu();
+                        }
+                    });
+                }
             }
 
             showMenu() {
                 if(document.pointerLockElement) document.exitPointerLock();
                 this.activeGame = null;
                 this.uiMenu.classList.remove('hidden'); 
+                this.uiOnlineLobby.classList.add('hidden');
                 this.uiGameOver.classList.add('hidden');
                 this.uiHud.classList.add('hidden'); 
-                this.uiControls.classList.add('hidden');
+                document.getElementById('hud-controls').classList.add('hidden');
                 this.mobileUI.classList.add('hidden');
                 this.mobileMenuBtn.classList.add('hidden');
+                document.getElementById('lobbyBtns').classList.remove('hidden');
+                document.getElementById('roomWaiting').classList.add('hidden');
+                if (socket) socket.disconnect(); 
                 this.input.clearConsumes();
             }
 
-            startGame(name) {
+            showOnlineLobby() {
+                this.uiMenu.classList.add('hidden');
+                this.uiOnlineLobby.classList.remove('hidden');
+                if (socket && !socket.connected) socket.connect();
+            }
+
+            createOnlineRoom() { if (socket) socket.emit('createRoom'); }
+            joinOnlineRoom() { 
+                const code = document.getElementById('joinCodeInput').value;
+                if (code.length === 6 && socket) socket.emit('joinRoom', code);
+            }
+
+            startGame(name, role = null, roomCode = null) {
                 this.activeGameName = name;
                 if(name === 'mine') this.activeGame = new MineGame(this.canvas, this.ctx, this.input);
                 if(name === 'slope') this.activeGame = new SlopeGame(this.canvas, this.ctx, this.input);
@@ -897,12 +718,20 @@
                 if(name === 'car')  this.activeGame = new CarGame(this.canvas, this.ctx, this.input);
                 if(name === 'dash') this.activeGame = new DashGame(this.canvas, this.ctx, this.input);
                 if(name === 'royale') this.activeGame = new RoyaleGame(this.canvas, this.ctx, this.input);
-                if(name === 'soccer') this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input);
+                
+                if(name === 'soccer') this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input, 'bot');
+                if(name === 'soccer_1v1') this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input, '1v1');
+                if(name === 'soccer_online') {
+                    this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input, 'online', role, roomCode);
+                    this.uiOnlineLobby.classList.add('hidden');
+                }
 
-                if(name === 'dash' || name === 'slope') this.elLevelDisp.classList.remove('hidden');
-                else this.elLevelDisp.classList.add('hidden');
+                if(name === 'dash' || name === 'slope') document.getElementById('levelDisplay').classList.remove('hidden');
+                else document.getElementById('levelDisplay').classList.add('hidden');
 
-                if (name === 'royale' && !this.isMobile) this.aimTip.classList.remove('hidden');
+                if (name === 'soccer_1v1') { this.aimTip.innerText = 'Kapus: A/D | Rúgó: Egér'; this.aimTip.classList.remove('hidden'); }
+                else if (name === 'soccer_online') { this.aimTip.innerText = role === 'goalie' ? 'Te vagy a KAPUS (A/D)' : 'Te vagy a RÚGÓ (Egér)'; this.aimTip.classList.remove('hidden'); }
+                else if (name === 'royale' && !this.isMobile) { this.aimTip.innerText = 'Kattints a fegyverhez!'; this.aimTip.classList.remove('hidden'); }
                 else this.aimTip.classList.add('hidden');
 
                 this.uiMenu.classList.add('hidden'); 
@@ -910,23 +739,27 @@
                 this.uiHud.classList.remove('hidden'); 
                 
                 if(this.isMobile) {
-                    if(name !== 'soccer' && name !== 'slope' && name !== 'car' && name !== 'moto') this.mobileUI.classList.remove('hidden');
-                    else if (name === 'soccer') this.mobileUI.classList.remove('hidden');
-                    this.uiControls.classList.add('hidden');
+                    if(name !== 'soccer' && name !== 'soccer_1v1' && name !== 'soccer_online' && name !== 'slope' && name !== 'car' && name !== 'moto') this.mobileUI.classList.remove('hidden');
+                    else if (name === 'soccer' || name === 'soccer_1v1' || (name === 'soccer_online' && role === 'kicker')) this.mobileUI.classList.remove('hidden');
+                    document.getElementById('hud-controls').classList.add('hidden');
                     this.mobileMenuBtn.classList.remove('hidden');
                 } else {
-                    this.uiControls.classList.remove('hidden');
+                    document.getElementById('hud-controls').classList.remove('hidden');
                 }
 
-                if (name === 'royale' && !this.isMobile) {
-                    setTimeout(() => { if(document.pointerLockElement !== this.canvas) this.canvas.requestPointerLock(); }, 100);
-                }
+                if (name === 'royale' && !this.isMobile) { setTimeout(() => { if(document.pointerLockElement !== this.canvas) this.canvas.requestPointerLock(); }, 100); }
 
                 this.input.clearConsumes();
                 this.lastTime = performance.now();
             }
 
-            restartGame() { this.startGame(this.activeGameName); }
+            restartGame() {
+                if (this.activeGameName === 'soccer_online') {
+                    this.showMenu(); 
+                } else {
+                    this.startGame(this.activeGameName);
+                }
+            }
 
             loop(t) {
                 let dt = (t - this.lastTime) / 1000; 
@@ -934,22 +767,17 @@
                 if(dt > 0.1) dt = 0.1;
 
                 if(!this.activeGame) {
-                    this.menuBg.update(dt); 
-                    this.menuBg.draw();
+                    this.menuBg.update(dt); this.menuBg.draw();
                 } else {
-                    if(this.input.consume('esc')) {
-                        this.showMenu();
-                    } else {
-                        if (this.activeGameName === 'royale' && document.pointerLockElement) {
-                            this.aimTip.classList.add('hidden');
-                        } else if (this.activeGameName === 'royale' && !this.isMobile) {
-                            this.aimTip.classList.remove('hidden');
-                        }
+                    if(this.input.consume('esc')) { this.showMenu(); } 
+                    else {
+                        if (this.activeGameName === 'royale' && document.pointerLockElement) { this.aimTip.classList.add('hidden'); } 
+                        else if (this.activeGameName === 'royale' && !this.isMobile) { this.aimTip.classList.remove('hidden'); }
 
                         this.activeGame.update(dt); 
                         this.activeGame.draw();
-                        this.elScore.innerText = this.activeGame.getScore();
-                        if(this.activeGame.level) this.elLevelVal.innerText = this.activeGame.level;
+                        document.getElementById('scoreVal').innerText = this.activeGame.getScore();
+                        if(this.activeGame.level) document.getElementById('levelVal').innerText = this.activeGame.level;
 
                         if(!this.activeGame.isAlive) {
                             if(this.activeGameName === 'slope' && this.activeGame.fallOffset < 800) {
@@ -958,10 +786,16 @@
                                 if(document.pointerLockElement) document.exitPointerLock();
                                 this.uiGameOver.classList.remove('hidden');
                                 this.uiHud.classList.add('hidden'); 
-                                this.uiControls.classList.add('hidden');
+                                document.getElementById('hud-controls').classList.add('hidden');
                                 this.mobileUI.classList.add('hidden');
                                 this.mobileMenuBtn.classList.add('hidden');
-                                this.elFinalScore.innerText = this.activeGame.getScore();
+                                document.getElementById('finalScoreVal').innerText = this.activeGame.getScore();
+                                
+                                if (this.activeGame.message) { document.getElementById('goTitle').innerText = this.activeGame.message; } 
+                                else { document.getElementById('goTitle').innerText = "Game Over"; }
+
+                                if (this.activeGameName === 'soccer_online') { document.getElementById('btnRestart').classList.add('hidden'); } 
+                                else { document.getElementById('btnRestart').classList.remove('hidden'); }
                             }
                         }
                     }
@@ -970,10 +804,7 @@
             }
         }
 
-        window.addEventListener('load', () => {
-            window.app = new GameManager();
-            window.app.showMenu();
-        });
+        window.addEventListener('load', () => { window.app = new GameManager(); window.app.showMenu(); });
     </script>
 </body>
 </html>
