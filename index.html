@@ -106,7 +106,6 @@
             </div>
         </div>
 
-        <!-- ONLINE MULTIPLAYER LOBBY -->
         <div id="onlineLobby" class="overlay hidden">
             <h2>Online Foci</h2>
             <div class="btn-group" id="lobbyBtns">
@@ -671,6 +670,17 @@
                         }
                     });
 
+                    // ÚJ RÉSZ: Következő kör indulásának elkapása a szervertől
+                    socket.on('startNextRound', () => {
+                        if (this.activeGame && this.activeGameName === 'soccer_online') {
+                            this.activeGame.isAlive = true;
+                            this.activeGame.resetTurn();
+                            this.uiGameOver.classList.add('hidden');
+                            this.uiHud.classList.remove('hidden');
+                            if(this.isMobile) this.mobileUI.classList.remove('hidden');
+                        }
+                    });
+
                     socket.on('opponentLeft', () => {
                         if(this.activeGame && this.activeGameName === 'soccer_online') {
                             alert("Az ellenfél kilépett!");
@@ -734,7 +744,6 @@
                 this.uiGameOver.classList.add('hidden');
                 this.uiHud.classList.remove('hidden'); 
                 
-                // ITT A JAVÍTÁS: A foci kapusa is megkapja a mobilos D-padet!
                 if(this.isMobile) {
                     if(name !== 'soccer' && name !== 'soccer_online' && name !== 'slope' && name !== 'car' && name !== 'moto') this.mobileUI.classList.remove('hidden');
                     else if (name === 'soccer' || name === 'soccer_online') this.mobileUI.classList.remove('hidden');
@@ -751,8 +760,9 @@
             }
 
             restartGame() {
+                // ÚJ RÉSZ: Ha online fociban vagyunk, a gomb csak jelez a szervernek, nem indítja újra a játékot nulláról
                 if (this.activeGameName === 'soccer_online') {
-                    this.showMenu(); 
+                    if (socket) socket.emit('nextRound', this.activeGame.roomCode);
                 } else {
                     this.startGame(this.activeGameName);
                 }
@@ -791,8 +801,14 @@
                                 if (this.activeGame.message) { document.getElementById('goTitle').innerText = this.activeGame.message; } 
                                 else { document.getElementById('goTitle').innerText = "Game Over"; }
 
-                                if (this.activeGameName === 'soccer_online') { document.getElementById('btnRestart').classList.add('hidden'); } 
-                                else { document.getElementById('btnRestart').classList.remove('hidden'); }
+                                // ÚJ RÉSZ: Dinamikus gomb szöveg - Focinál "Folytatás"
+                                if (this.activeGameName === 'soccer_online') { 
+                                    document.getElementById('btnRestart').innerText = "Folytatás";
+                                    document.getElementById('btnRestart').classList.remove('hidden'); 
+                                } else { 
+                                    document.getElementById('btnRestart').innerText = "Újraindítás";
+                                    document.getElementById('btnRestart').classList.remove('hidden'); 
+                                }
                             }
                         }
                     }
