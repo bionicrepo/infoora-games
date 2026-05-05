@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Arcade Hub - Ultimate 7 Games</title>
+    <title>Arcade Hub - Ultimate 9 Games</title>
     <!-- Socket.io Kliens betöltése -->
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <style>
@@ -30,11 +30,27 @@
         }
         .hidden { display: none !important; }
         
-        h1 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; color: #fff; text-shadow: 0 0 10px #fff, 0 0 20px #00e5ff; text-align: center; }
+        h1 { font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; color: #fff; text-shadow: 0 0 10px #fff, 0 0 20px #00e5ff; text-align: center; }
         h2 { font-size: 2.5rem; margin-bottom: 10px; color: #ff0055; text-shadow: 0 0 15px rgba(255,0,85,0.8); }
         p { font-size: 1.2rem; margin-bottom: 15px; text-shadow: 1px 1px 5px #000; text-align: center; }
         
-        .btn-group { display: flex; flex-direction: column; gap: 8px; width: 80%; max-width: 350px;}
+        /* Alap gomb csoport (Game Over, Lobby) */
+        .btn-group { display: flex; flex-direction: column; gap: 8px; width: 80%; max-width: 350px; padding: 10px; }
+        
+        /* Főmenü egyedi elrendezése - Két oszlop és szélesebb konténer */
+        #mainMenu .btn-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 75vh;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        #mainMenu .btn-group button { width: 100%; margin: 0; }
+
         button { 
             background: rgba(0,229,255,0.05); color: #fff; border: 1px solid rgba(0,229,255,0.5); 
             padding: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 6px; 
@@ -50,6 +66,8 @@
         .soccer-btn:hover { background: rgba(243, 156, 18, 0.2); border-color: #f39c12; box-shadow: 0 0 15px rgba(243, 156, 18, 0.5); }
         .online-btn { border-color: #9b59b6 !important; box-shadow: inset 0 0 10px rgba(155, 89, 182, 0.2); }
         .online-btn:hover { background: rgba(155, 89, 182, 0.2); border-color: #9b59b6; box-shadow: 0 0 15px rgba(155, 89, 182, 0.5); }
+        .blast-btn { border-color: #e056fd !important; box-shadow: inset 0 0 10px rgba(224, 86, 253, 0.2); }
+        .blast-btn:hover { background: rgba(224, 86, 253, 0.2); border-color: #e056fd; box-shadow: 0 0 15px rgba(224, 86, 253, 0.5); }
 
         input[type="text"] { background: rgba(0,0,0,0.5); border: 2px solid #00e5ff; color: #fff; padding: 10px; font-size: 1.5rem; text-align: center; border-radius: 6px; outline: none; margin-bottom: 10px; width: 100%; letter-spacing: 3px; }
 
@@ -69,6 +87,23 @@
         .btn-right { top: 50px; right: 0; width: 50px; height: 50px; }
         .action-pad { position: relative; width: 120px; height: 150px; pointer-events: auto; display: flex; justify-content: center; align-items: center;}
         .btn-action { position: relative; width: 90px; height: 90px; border-radius: 50%; background: rgba(255, 0, 85, 0.2); border: 2px solid rgba(255, 0, 85, 0.6); box-shadow: 0 0 15px rgba(255, 0, 85, 0.3); font-size: 1.2rem; }
+
+        /* JAVÍTOTT FORRÁSKÓD GOMB */
+        .source-link-btn {
+            position: absolute; 
+            bottom: 15px; 
+            left: 15px; 
+            z-index: 50;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #555;
+            color: #aaa;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .source-link-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: #aaa; }
     </style>
 </head>
 <body>
@@ -81,7 +116,7 @@
         
         <div id="mobileMenuBtn" class="hidden">MENÜ</div>
         <div id="mobileControls" class="hidden">
-            <div class="d-pad">
+            <div class="d-pad" id="dpadContainer">
                 <div class="m-btn btn-up" data-key="up">▲</div><div class="m-btn btn-down" data-key="down">▼</div>
                 <div class="m-btn btn-left" data-key="left">◀</div><div class="m-btn btn-right" data-key="right">▶</div>
             </div>
@@ -93,17 +128,17 @@
             <div class="btn-group">
                 <button onclick="window.app.startGame('soccer')" class="soccer-btn">Foci: Gép ellen</button>
                 <button onclick="window.app.showOnlineLobby()" class="online-btn">Foci: ONLINE MULTI</button>
+                <button onclick="window.app.startGame('blockblast')" class="blast-btn">Blast Cubes (Építő)</button>
+                <button onclick="window.app.startGame('roulette')" class="danger">Orosz Rulett ☠️</button>
                 <button onclick="window.app.startGame('mine')" class="mc-btn">Mine2D (Építő!)</button>
                 <button onclick="window.app.startGame('royale')" style="border-color:#39ff14;">Neon Royale (3D FPS)</button>
                 <button onclick="window.app.startGame('slope')">Slope 3D</button>
                 <button onclick="window.app.startGame('moto')">Motorverseny</button>
                 <button onclick="window.app.startGame('car')">Autóverseny</button>
-                <button onclick="window.app.startGame('dash')">Geometry Dash</button>
+                <button onclick="window.app.startGame('dash')">Jump Dash</button>
             </div>
             
-            <div style="position: absolute; bottom: 15px; left: 15px; color: gray; font-size: 0.9rem;">
-                Forráskód: <a href="https://raw.githubusercontent.com/bionicrepo/infoora-games/refs/heads/main/index.html" target="_blank" style="color: gray; text-decoration: underline;">link</a>
-            </div>
+            <a href="https://raw.githubusercontent.com/bionicrepo/infoora-games/refs/heads/main/index.html" target="_blank" class="source-link-btn">💻 Forráskód</a>
         </div>
 
         <div id="onlineLobby" class="overlay hidden">
@@ -157,11 +192,12 @@
                 window.addEventListener('mousedown', e => { if(e.button === 0) { this.mouse.down = true; this.consumes.click = true; if (window.app && window.app.activeGameName !== 'mine') { this.keys.action = true; this.consumes.action = true; } } });
                 window.addEventListener('mouseup', e => { if(e.button === 0) { this.mouse.down = false; if (window.app && window.app.activeGameName !== 'mine') { this.keys.action = false; } } });
                 let lastTouchX = 0; let lastTouchY = 0;
-                cvs.addEventListener('touchstart', e => { if (e.target.classList.contains('m-btn') || e.target.id === 'mobileMenuBtn') return; let r = cvs.getBoundingClientRect(); this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width); this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height); lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY; this.consumes.click = true; });
+                cvs.addEventListener('touchstart', e => { if (e.target.classList.contains('m-btn') || e.target.id === 'mobileMenuBtn') return; let r = cvs.getBoundingClientRect(); this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width); this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height); lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY; this.mouse.down = true; this.consumes.click = true; });
                 cvs.addEventListener('touchmove', e => { if (e.target.classList.contains('m-btn') || e.target.id === 'mobileMenuBtn') return; e.preventDefault(); let dx = e.touches[0].clientX - lastTouchX; let dy = e.touches[0].clientY - lastTouchY; this.movementX += dx * 2; this.movementY += dy * 2; lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY; let r = cvs.getBoundingClientRect(); this.mouse.x = (e.touches[0].clientX - r.left) * (800 / r.width); this.mouse.y = (e.touches[0].clientY - r.top) * (600 / r.height); }, { passive: false });
+                cvs.addEventListener('touchend', e => { this.mouse.down = false; });
                 document.querySelectorAll('.m-btn').forEach(btn => { btn.addEventListener('touchstart', e => { e.preventDefault(); let key = btn.dataset.key; if(key === 'action') { this.mouse.down = true; this.keys.action = true; this.consumes.action = true; } else { if (!this.keys[key]) this.consumes[key] = true; this.keys[key] = true; } }); btn.addEventListener('touchend', e => { e.preventDefault(); let key = btn.dataset.key; if(key === 'action') { this.mouse.down = false; this.keys.action = false; } else { this.keys[key] = false; } }); });
             }
-            isDown(k) { return this.keys[k] === true || (k === 'action' && this.mouse.down && window.app && window.app.activeGameName !== 'mine'); }
+            isDown(k) { return this.keys[k] === true || (k === 'action' && this.mouse.down && window.app && window.app.activeGameName !== 'mine' && window.app.activeGameName !== 'blockblast'); }
             consume(k) { if(this.consumes[k]) { this.consumes[k] = false; return true; } return false; }
             clearConsumes() { for(let k in this.consumes) this.consumes[k] = false; }
         }
@@ -173,14 +209,223 @@
         }
 
         // ==========================================
-        // FOCI - OFFLINE ÉS ONLINE MÓD
+        // 1. ÚJ JÁTÉK: BLOCK BLAST
+        // ==========================================
+        class BlockBlastGame {
+            constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
+            reset() {
+                this.gridSize = 8; this.tileSize = 45; this.score = 0; this.isAlive = true;
+                this.gridX = 400 - (this.gridSize * this.tileSize) / 2; this.gridY = 80;
+                this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(null));
+                this.shapes = [ [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]], [[1,1],[1,1]], [[1,1,1],[1,0,0],[1,0,0]], [[1,1,1],[0,0,1],[0,0,1]], [[1,1,1],[0,1,0]], [[1,0],[1,1],[1,0]] ];
+                this.colors = ['#ff0055', '#00e5ff', '#39ff14', '#f1c40f', '#9b59b6', '#e67e22'];
+                this.hand = []; this.dragged = null; this.draggedIdx = -1;
+                this.fillHand();
+            }
+            fillHand() {
+                for(let i=0; i<3; i++) {
+                    let s = this.shapes[Math.floor(Math.random()*this.shapes.length)];
+                    let c = this.colors[Math.floor(Math.random()*this.colors.length)];
+                    this.hand.push({shape: s, color: c, x: 200 + i*200, y: 500, startX: 200 + i*200, startY: 500});
+                }
+                if(this.checkGameOver()) this.isAlive = false;
+            }
+            canPlace(shape, gx, gy) {
+                for(let y=0; y<shape.length; y++) {
+                    for(let x=0; x<shape[y].length; x++) {
+                        if(shape[y][x]) {
+                            let nx = gx + x; let ny = gy + y;
+                            if(nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize || this.grid[ny][nx] !== null) return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            place(shape, color, gx, gy) {
+                let blocks = 0;
+                for(let y=0; y<shape.length; y++) {
+                    for(let x=0; x<shape[y].length; x++) {
+                        if(shape[y][x]) { this.grid[gy+y][gx+x] = color; blocks++; }
+                    }
+                }
+                this.score += blocks * 10;
+            }
+            checkLines() {
+                let rowsToClear = [], colsToClear = [];
+                for(let y=0; y<this.gridSize; y++) { if(this.grid[y].every(c => c !== null)) rowsToClear.push(y); }
+                for(let x=0; x<this.gridSize; x++) {
+                    let full = true; for(let y=0; y<this.gridSize; y++) { if(this.grid[y][x] === null) full = false; }
+                    if(full) colsToClear.push(x);
+                }
+                rowsToClear.forEach(y => { for(let x=0; x<this.gridSize; x++) this.grid[y][x] = null; });
+                colsToClear.forEach(x => { for(let y=0; y<this.gridSize; y++) this.grid[y][x] = null; });
+                this.score += (rowsToClear.length + colsToClear.length) * 100;
+            }
+            checkGameOver() {
+                if(this.hand.every(p => p === null)) return false;
+                for(let p of this.hand) {
+                    if(!p) continue;
+                    for(let y=0; y<this.gridSize; y++) {
+                        for(let x=0; x<this.gridSize; x++) { if(this.canPlace(p.shape, x, y)) return false; }
+                    }
+                }
+                return true;
+            }
+            update(dt) {
+                if(!this.isAlive) return;
+                let mx = this.input.mouse.x; let my = this.input.mouse.y;
+                if(this.input.mouse.down) {
+                    if(!this.dragged) {
+                        for(let i=0; i<this.hand.length; i++) {
+                            let p = this.hand[i];
+                            if(p && mx > p.x - 60 && mx < p.x + 60 && my > p.y - 60 && my < p.y + 60) {
+                                this.dragged = p; this.draggedIdx = i; break;
+                            }
+                        }
+                    }
+                    if(this.dragged) {
+                        let w = this.dragged.shape[0].length * this.tileSize; let h = this.dragged.shape.length * this.tileSize;
+                        this.dragged.x = mx - w/2; this.dragged.y = my - h/2 - 50; // Offset for finger visibility
+                    }
+                } else {
+                    if(this.dragged) {
+                        let gx = Math.round((this.dragged.x - this.gridX) / this.tileSize);
+                        let gy = Math.round((this.dragged.y - this.gridY) / this.tileSize);
+                        if(this.canPlace(this.dragged.shape, gx, gy)) {
+                            this.place(this.dragged.shape, this.dragged.color, gx, gy);
+                            this.hand[this.draggedIdx] = null; this.checkLines();
+                            if(this.hand.every(p => p === null)) this.fillHand();
+                            else if(this.checkGameOver()) this.isAlive = false;
+                        } else {
+                            this.dragged.x = this.dragged.startX; this.dragged.y = this.dragged.startY;
+                        }
+                        this.dragged = null; this.draggedIdx = -1;
+                    }
+                }
+            }
+            drawShape(shape, color, px, py, alpha = 1) {
+                this.ctx.globalAlpha = alpha; this.ctx.fillStyle = color; this.ctx.strokeStyle = 'rgba(0,0,0,0.5)'; this.ctx.lineWidth = 2;
+                for(let y=0; y<shape.length; y++) {
+                    for(let x=0; x<shape[y].length; x++) {
+                        if(shape[y][x]) {
+                            this.ctx.fillRect(px + x*this.tileSize, py + y*this.tileSize, this.tileSize, this.tileSize);
+                            this.ctx.strokeRect(px + x*this.tileSize, py + y*this.tileSize, this.tileSize, this.tileSize);
+                            this.ctx.fillStyle = 'rgba(255,255,255,0.2)'; this.ctx.fillRect(px + x*this.tileSize, py + y*this.tileSize, this.tileSize, 6); this.ctx.fillStyle = color;
+                        }
+                    }
+                }
+                this.ctx.globalAlpha = 1;
+            }
+            draw() {
+                this.ctx.fillStyle = '#111'; this.ctx.fillRect(0,0,800,600);
+                this.ctx.fillStyle = '#222'; this.ctx.fillRect(this.gridX-5, this.gridY-5, this.gridSize*this.tileSize+10, this.gridSize*this.tileSize+10);
+                for(let y=0; y<this.gridSize; y++) {
+                    for(let x=0; x<this.gridSize; x++) {
+                        let cx = this.gridX + x*this.tileSize, cy = this.gridY + y*this.tileSize;
+                        if(this.grid[y][x]) {
+                            this.ctx.fillStyle = this.grid[y][x]; this.ctx.fillRect(cx, cy, this.tileSize, this.tileSize);
+                            this.ctx.strokeStyle = 'rgba(0,0,0,0.5)'; this.ctx.strokeRect(cx, cy, this.tileSize, this.tileSize);
+                            this.ctx.fillStyle = 'rgba(255,255,255,0.2)'; this.ctx.fillRect(cx, cy, this.tileSize, 6);
+                        } else {
+                            this.ctx.strokeStyle = '#333'; this.ctx.strokeRect(cx, cy, this.tileSize, this.tileSize);
+                        }
+                    }
+                }
+                this.ctx.fillStyle = 'rgba(0,229,255,0.1)'; this.ctx.fillRect(0, 460, 800, 140);
+                for(let i=0; i<this.hand.length; i++) {
+                    let p = this.hand[i];
+                    if(p && p !== this.dragged) {
+                        let w = p.shape[0].length * this.tileSize; let h = p.shape.length * this.tileSize;
+                        this.drawShape(p.shape, p.color, p.startX - w/2, p.startY - h/2);
+                    }
+                }
+                if(this.dragged) {
+                    let gx = Math.round((this.dragged.x - this.gridX) / this.tileSize);
+                    let gy = Math.round((this.dragged.y - this.gridY) / this.tileSize);
+                    if(this.canPlace(this.dragged.shape, gx, gy)) this.drawShape(this.dragged.shape, '#fff', this.gridX + gx*this.tileSize, this.gridY + gy*this.tileSize, 0.3);
+                    this.drawShape(this.dragged.shape, this.dragged.color, this.dragged.x, this.dragged.y);
+                }
+            }
+            getScore() { return this.score; }
+        }
+
+        // ==========================================
+        // 2. ÚJ JÁTÉK: OROSZ RULETT
+        // ==========================================
+        class RouletteGame {
+            constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
+            reset() {
+                this.bullet = Math.floor(Math.random() * 6); this.current = 0; this.score = 0; this.isAlive = true;
+                this.turn = 'player'; this.state = 'waiting'; this.timer = 0; this.message = "Te jössz! Húzd meg a ravaszt!";
+                this.cylinderAngle = 0; this.targetAngle = 0;
+            }
+            update(dt) {
+                if(!this.isAlive) return;
+                this.cylinderAngle += (this.targetAngle - this.cylinderAngle) * 10 * dt;
+                
+                if(this.state === 'waiting') {
+                    if(this.turn === 'player' && (this.input.consume('action') || this.input.consume('click'))) {
+                        this.state = 'firing'; this.timer = 0; this.message = "...";
+                    } else if (this.turn === 'bot') {
+                        this.timer += dt; if(this.timer > 1.5) { this.state = 'firing'; this.timer = 0; this.message = "..."; }
+                    }
+                } else if(this.state === 'firing') {
+                    this.timer += dt;
+                    if(this.timer > 0.5) {
+                        if(this.current === this.bullet) {
+                            if(this.turn === 'player') { this.isAlive = false; this.message = "BUMM! Meghaltál!"; } 
+                            else { this.score += 100; this.message = "BUMM! A Bot meghalt!"; this.state = 'next_round'; this.timer = 0; }
+                        } else {
+                            this.current++; this.targetAngle -= Math.PI / 3;
+                            if(this.turn === 'player') { this.turn = 'bot'; this.message = "KATT! Túlélted. A Bot jön."; this.score += 10; } 
+                            else { this.turn = 'player'; this.message = "KATT! A Bot túlélte. Te jössz!"; }
+                            this.state = 'waiting'; this.timer = 0;
+                        }
+                    }
+                } else if(this.state === 'next_round') {
+                    this.timer += dt;
+                    if(this.timer > 2) {
+                        this.bullet = Math.floor(Math.random() * 6); this.current = 0; this.turn = 'player';
+                        this.state = 'waiting'; this.message = "Új kör! Te kezdesz.";
+                    }
+                }
+            }
+            draw() {
+                this.ctx.fillStyle = '#0a0a1a'; this.ctx.fillRect(0,0,800,600);
+                this.ctx.fillStyle = '#fff'; this.ctx.font = 'bold 30px Tahoma'; this.ctx.textAlign = 'center';
+                this.ctx.fillText(this.message, 400, 100);
+                
+                let cx = 400, cy = 350, r = 150;
+                this.ctx.save(); this.ctx.translate(cx, cy); this.ctx.rotate(this.cylinderAngle);
+                this.ctx.fillStyle = '#333'; this.ctx.beginPath(); this.ctx.arc(0, 0, r, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.strokeStyle = '#555'; this.ctx.lineWidth = 5; this.ctx.stroke();
+                this.ctx.fillStyle = '#111'; this.ctx.beginPath(); this.ctx.arc(0, 0, 20, 0, Math.PI*2); this.ctx.fill();
+                
+                for(let i=0; i<6; i++) {
+                    let a = i * (Math.PI / 3) - Math.PI/2;
+                    let hx = Math.cos(a) * 90, hy = Math.sin(a) * 90;
+                    this.ctx.fillStyle = '#111'; this.ctx.beginPath(); this.ctx.arc(hx, hy, 40, 0, Math.PI*2); this.ctx.fill();
+                    this.ctx.strokeStyle = '#222'; this.ctx.stroke();
+                }
+                this.ctx.restore();
+                
+                this.ctx.strokeStyle = '#ff0055'; this.ctx.lineWidth = 4;
+                this.ctx.beginPath(); this.ctx.arc(cx, cy - 90, 45, 0, Math.PI*2); this.ctx.stroke();
+                this.ctx.fillStyle = '#ff0055'; this.ctx.font = '20px Tahoma';
+                this.ctx.fillText("AKTÍV KAMRA", cx, cy - 150);
+                this.ctx.textAlign = 'left';
+            }
+            getScore() { return this.score; }
+        }
+
+
+        // ==========================================
+        // TÖBBI JÁTÉK (FOCI, MINE, ROYALE, SLOPE, CAR, MOTO, DASH)
         // ==========================================
         class SoccerGame {
             constructor(canvas, ctx, input, mode = 'bot', onlineRole = null, roomCode = null) { 
                 this.canvas = canvas; this.ctx = ctx; this.input = input; 
-                this.mode = mode; // 'bot' vagy 'online'
-                this.onlineRole = onlineRole; // 'goalie' vagy 'kicker'
-                this.roomCode = roomCode;
+                this.mode = mode; this.onlineRole = onlineRole; this.roomCode = roomCode;
                 this.reset(); 
             }
             reset() { this.score = 0; this.isAlive = true; this.message = ""; this.resetTurn(); }
@@ -196,18 +441,11 @@
                 if (!this.isAlive) return;
                 if (this.aimCooldown > 0) this.aimCooldown -= dt;
 
-                // KAPUS MOZGÁS
-                if (this.mode === 'bot') {
-                    this.goalie.x += this.goalie.vx * this.goalie.dir * dt;
-                } else if (this.mode === 'online' && this.onlineRole === 'goalie') {
-                    let gMove = 0;
-                    if (this.input.isDown('left')) gMove -= 1;
-                    if (this.input.isDown('right')) gMove += 1;
+                if (this.mode === 'bot') { this.goalie.x += this.goalie.vx * this.goalie.dir * dt; } 
+                else if (this.mode === 'online' && this.onlineRole === 'goalie') {
+                    let gMove = 0; if (this.input.isDown('left')) gMove -= 1; if (this.input.isDown('right')) gMove += 1;
                     this.goalie.x += gMove * 500 * dt;
-
-                    if (socket) {
-                        socket.emit('updateGoalie', { room: this.roomCode, x: this.goalie.x });
-                    }
+                    if (socket) socket.emit('updateGoalie', { room: this.roomCode, x: this.goalie.x });
                 }
 
                 if (this.mode !== 'online' || this.onlineRole === 'goalie') {
@@ -215,7 +453,6 @@
                     if (this.goalie.x + this.goalie.w/2 > this.goal.x + this.goal.w) { this.goalie.x = this.goal.x + this.goal.w - this.goalie.w/2; if(this.mode === 'bot') this.goalie.dir *= -1; }
                 }
 
-                // LABDA LÖVÉS
                 if (this.ball.state === 'aim') {
                     if (this.mode !== 'online' || this.onlineRole === 'kicker') {
                         let mx = this.input.mouse.x; let my = this.input.mouse.y;
@@ -225,49 +462,32 @@
                         if (this.aimCooldown <= 0 && (this.input.consume('action') || this.input.consume('click'))) {
                             this.ball.state = 'shoot';
                             let power = 1000;
-                            this.ball.vx = Math.cos(this.aimAngle) * power;
-                            this.ball.vy = Math.sin(this.aimAngle) * power;
-
-                            if (this.mode === 'online' && socket) {
-                                socket.emit('shootBall', { room: this.roomCode, vx: this.ball.vx, vy: this.ball.vy, x: this.ball.x, y: this.ball.y });
-                            }
+                            this.ball.vx = Math.cos(this.aimAngle) * power; this.ball.vy = Math.sin(this.aimAngle) * power;
+                            if (this.mode === 'online' && socket) socket.emit('shootBall', { room: this.roomCode, vx: this.ball.vx, vy: this.ball.vy, x: this.ball.x, y: this.ball.y });
                         }
                     }
                 } else if (this.ball.state === 'shoot') {
-                    this.ball.x += this.ball.vx * dt;
-                    this.ball.y += this.ball.vy * dt;
-
+                    this.ball.x += this.ball.vx * dt; this.ball.y += this.ball.vy * dt;
                     let r = this.ball.r, gx = this.goalie.x - this.goalie.w/2, gy = this.goalie.y - this.goalie.h/2;
-                    
-                    if (this.ball.x + r > gx && this.ball.x - r < gx + this.goalie.w && this.ball.y + r > gy && this.ball.y - r < gy + this.goalie.h) {
-                        this.isAlive = false; this.message = "VÉDÉS!";
-                    }
-
+                    if (this.ball.x + r > gx && this.ball.x - r < gx + this.goalie.w && this.ball.y + r > gy && this.ball.y - r < gy + this.goalie.h) { this.isAlive = false; this.message = "VÉDÉS!"; }
                     if (this.ball.y < this.goal.y + this.goal.h) {
-                        if (this.ball.x > this.goal.x && this.ball.x < this.goal.x + this.goal.w) {
-                            this.score++; this.message = "GÓL!"; this.resetTurn();
-                        } else {
-                            this.isAlive = false; this.message = "KAPUFELÉ!";
-                        }
+                        if (this.ball.x > this.goal.x && this.ball.x < this.goal.x + this.goal.w) { this.score++; this.message = "GÓL!"; this.resetTurn(); } 
+                        else { this.isAlive = false; this.message = "KAPUFELÉ!"; }
                     }
                     if(this.ball.x < 0 || this.ball.x > 800 || this.ball.y < 0) { this.isAlive = false; this.message = "KINT!"; }
                 }
             }
-            
             draw() {
                 this.ctx.fillStyle = '#2E8B57'; this.ctx.fillRect(0, 0, 800, 600);
                 this.ctx.fillStyle = '#228B22'; for(let i=0; i<800; i+=100) this.ctx.fillRect(i, 0, 50, 600);
                 this.ctx.strokeStyle = 'rgba(255,255,255,0.7)'; this.ctx.lineWidth = 4;
                 this.ctx.strokeRect(100, 50, 600, 300); this.ctx.beginPath(); this.ctx.arc(400, 350, 80, 0, Math.PI); this.ctx.stroke();
                 this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(400, 500, 5, 0, Math.PI*2); this.ctx.fill();
-
                 this.ctx.fillStyle = 'rgba(255,255,255,0.15)'; this.ctx.fillRect(this.goal.x, this.goal.y, this.goal.w, this.goal.h);
                 this.ctx.strokeStyle = '#fff'; this.ctx.lineWidth = 6; this.ctx.strokeRect(this.goal.x, this.goal.y, this.goal.w, this.goal.h);
-
                 let gx = this.goalie.x - this.goalie.w/2, gy = this.goalie.y - this.goalie.h/2;
                 this.ctx.fillStyle = '#e74c3c'; this.ctx.fillRect(gx, gy, this.goalie.w, this.goalie.h);
                 this.ctx.fillStyle = '#fff'; this.ctx.beginPath(); this.ctx.arc(this.ball.x, this.ball.y, this.ball.r, 0, Math.PI*2); this.ctx.fill();
-
                 if (this.ball.state === 'aim' && this.aimCooldown <= 0 && (this.mode !== 'online' || this.onlineRole === 'kicker')) {
                     this.ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)'; this.ctx.lineWidth = 4; this.ctx.setLineDash([10, 10]);
                     this.ctx.beginPath(); this.ctx.moveTo(this.ball.x, this.ball.y);
@@ -278,9 +498,6 @@
             getScore() { return this.score; }
         }
 
-        // ==========================================
-        // MINE 2D
-        // ==========================================
         class MineGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
             reset() {
@@ -378,9 +595,6 @@
             getScore() { return 0; }
         }
 
-        // ==========================================
-        // NEON ROYALE (3D FORTNITE STYLE)
-        // ==========================================
         class RoyaleGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
             reset() {
@@ -551,9 +765,6 @@
             getScore() { return Math.floor(this.score); }
         }
 
-        // ==========================================
-        // SLOPE 3D
-        // ==========================================
         class SlopeGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
             reset() { this.speed = 500; this.posZ = 0; this.score = 0; this.isAlive = true; this.playerOffset = 0; this.playerVelocity = 0; this.playerJumpHeight = 0; this.playerJumpVy = 0; this.segments = []; this.trackX = 0; this.curve = 0; this.targetCurve = 0; this.fallOffset = 0; this.lastObsZ = 0; this.lastRampZ = 0; for(let i=0; i<60; i++) this.addSegment(i * 50); }
@@ -563,9 +774,6 @@
             getScore() { return Math.floor(this.score); }
         }
 
-        // ==========================================
-        // CAR GAME (JAVÍTOTT: TELJESEN LAPOS HITBOX)
-        // ==========================================
         class CarGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
             reset() { this.speed = 150; this.posZ = 0; this.playerX = 0; this.score = 0; this.isAlive = true; this.trackCurve = 0; this.enemies = []; this.spawnTimer = 0; }
@@ -588,9 +796,6 @@
             getScore() { return Math.floor(this.score); }
         }
 
-        // ==========================================
-        // MOTO & DASH
-        // ==========================================
         class MotoGame {
             constructor(canvas, ctx, input) { this.canvas = canvas; this.ctx = ctx; this.input = input; this.reset(); }
             reset() { this.lanes = [400, 480, 560]; this.player = { laneIdx: 1, x: 150, y: this.lanes[1] }; this.enemies = []; this.speed = 400; this.bgOffset = 0; this.score = 0; this.spawnTimer = 0; this.isAlive = true; }
@@ -622,6 +827,7 @@
                 this.uiHud = document.getElementById('hud'); 
                 this.mobileUI = document.getElementById('mobileControls');
                 this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                this.dpadContainer = document.getElementById('dpadContainer');
                 this.aimTip = document.getElementById('aimTip');
                 
                 this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -641,81 +847,25 @@
             setupSockets() {
                 if (typeof io !== 'undefined') {
                     socket = io(SERVER_URL);
-                    
-                    socket.on('roomCreated', (code) => {
-                        document.getElementById('lobbyBtns').classList.add('hidden');
-                        document.getElementById('roomWaiting').classList.remove('hidden');
-                        document.getElementById('generatedRoomCode').innerText = code;
-                    });
-
-                    socket.on('gameStart', (data) => {
-                        this.startGame('soccer_online', data.role, data.room);
-                    });
-
+                    socket.on('roomCreated', (code) => { document.getElementById('lobbyBtns').classList.add('hidden'); document.getElementById('roomWaiting').classList.remove('hidden'); document.getElementById('generatedRoomCode').innerText = code; });
+                    socket.on('gameStart', (data) => { this.startGame('soccer_online', data.role, data.room); });
                     socket.on('errorMsg', (msg) => { alert(msg); });
-
-                    socket.on('goalieMoved', (x) => {
-                        if (this.activeGame && this.activeGameName === 'soccer_online' && this.activeGame.onlineRole === 'kicker') {
-                            this.activeGame.goalie.x = x;
-                        }
-                    });
-
-                    socket.on('ballShot', (data) => {
-                        if (this.activeGame && this.activeGameName === 'soccer_online' && this.activeGame.onlineRole === 'goalie') {
-                            this.activeGame.ball.x = data.x;
-                            this.activeGame.ball.y = data.y;
-                            this.activeGame.ball.vx = data.vx;
-                            this.activeGame.ball.vy = data.vy;
-                            this.activeGame.ball.state = 'shoot';
-                        }
-                    });
-
-                    socket.on('startNextRound', () => {
-                        if (this.activeGame && this.activeGameName === 'soccer_online') {
-                            this.activeGame.isAlive = true;
-                            this.activeGame.resetTurn();
-                            this.uiGameOver.classList.add('hidden');
-                            this.uiHud.classList.remove('hidden');
-                            if(this.isMobile) this.mobileUI.classList.remove('hidden');
-                        }
-                    });
-
-                    socket.on('opponentLeft', () => {
-                        if(this.activeGame && this.activeGameName === 'soccer_online') {
-                            alert("Az ellenfél kilépett!");
-                            this.showMenu();
-                        }
-                    });
+                    socket.on('goalieMoved', (x) => { if (this.activeGame && this.activeGameName === 'soccer_online' && this.activeGame.onlineRole === 'kicker') this.activeGame.goalie.x = x; });
+                    socket.on('ballShot', (data) => { if (this.activeGame && this.activeGameName === 'soccer_online' && this.activeGame.onlineRole === 'goalie') { this.activeGame.ball.x = data.x; this.activeGame.ball.y = data.y; this.activeGame.ball.vx = data.vx; this.activeGame.ball.vy = data.vy; this.activeGame.ball.state = 'shoot'; } });
+                    socket.on('startNextRound', () => { if (this.activeGame && this.activeGameName === 'soccer_online') { this.activeGame.isAlive = true; this.activeGame.resetTurn(); this.uiGameOver.classList.add('hidden'); this.uiHud.classList.remove('hidden'); if(this.isMobile) this.mobileUI.classList.remove('hidden'); } });
+                    socket.on('opponentLeft', () => { if(this.activeGame && this.activeGameName === 'soccer_online') { alert("Az ellenfél kilépett!"); this.showMenu(); } });
                 }
             }
 
             showMenu() {
                 if(document.pointerLockElement) document.exitPointerLock();
-                this.activeGame = null;
-                this.uiMenu.classList.remove('hidden'); 
-                this.uiOnlineLobby.classList.add('hidden');
-                this.uiGameOver.classList.add('hidden');
-                this.uiHud.classList.add('hidden'); 
-                document.getElementById('hud-controls').classList.add('hidden');
-                this.mobileUI.classList.add('hidden');
-                this.mobileMenuBtn.classList.add('hidden');
-                document.getElementById('lobbyBtns').classList.remove('hidden');
-                document.getElementById('roomWaiting').classList.add('hidden');
-                if (socket) socket.disconnect(); 
-                this.input.clearConsumes();
+                this.activeGame = null; this.uiMenu.classList.remove('hidden'); this.uiOnlineLobby.classList.add('hidden'); this.uiGameOver.classList.add('hidden'); this.uiHud.classList.add('hidden'); document.getElementById('hud-controls').classList.add('hidden'); this.mobileUI.classList.add('hidden'); this.mobileMenuBtn.classList.add('hidden'); document.getElementById('lobbyBtns').classList.remove('hidden'); document.getElementById('roomWaiting').classList.add('hidden');
+                if (socket) socket.disconnect(); this.input.clearConsumes();
             }
 
-            showOnlineLobby() {
-                this.uiMenu.classList.add('hidden');
-                this.uiOnlineLobby.classList.remove('hidden');
-                if (socket && !socket.connected) socket.connect();
-            }
-
+            showOnlineLobby() { this.uiMenu.classList.add('hidden'); this.uiOnlineLobby.classList.remove('hidden'); if (socket && !socket.connected) socket.connect(); }
             createOnlineRoom() { if (socket) socket.emit('createRoom'); }
-            joinOnlineRoom() { 
-                const code = document.getElementById('joinCodeInput').value;
-                if (code.length === 6 && socket) socket.emit('joinRoom', code);
-            }
+            joinOnlineRoom() { const code = document.getElementById('joinCodeInput').value; if (code.length === 6 && socket) socket.emit('joinRoom', code); }
 
             startGame(name, role = null, roomCode = null) {
                 this.activeGameName = name;
@@ -725,51 +875,50 @@
                 if(name === 'car')  this.activeGame = new CarGame(this.canvas, this.ctx, this.input);
                 if(name === 'dash') this.activeGame = new DashGame(this.canvas, this.ctx, this.input);
                 if(name === 'royale') this.activeGame = new RoyaleGame(this.canvas, this.ctx, this.input);
-                
                 if(name === 'soccer') this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input, 'bot');
-                if(name === 'soccer_online') {
-                    this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input, 'online', role, roomCode);
-                    this.uiOnlineLobby.classList.add('hidden');
-                }
+                if(name === 'blockblast') this.activeGame = new BlockBlastGame(this.canvas, this.ctx, this.input);
+                if(name === 'roulette') this.activeGame = new RouletteGame(this.canvas, this.ctx, this.input);
+                
+                if(name === 'soccer_online') { this.activeGame = new SoccerGame(this.canvas, this.ctx, this.input, 'online', role, roomCode); this.uiOnlineLobby.classList.add('hidden'); }
 
-                if(name === 'dash' || name === 'slope') document.getElementById('levelDisplay').classList.remove('hidden');
-                else document.getElementById('levelDisplay').classList.add('hidden');
+                if(name === 'dash' || name === 'slope') document.getElementById('levelDisplay').classList.remove('hidden'); else document.getElementById('levelDisplay').classList.add('hidden');
 
                 if (name === 'soccer_online') { this.aimTip.innerText = role === 'goalie' ? 'Te vagy a KAPUS (A/D vagy Nyilak)' : 'Te vagy a RÚGÓ (Egér / Érintés)'; this.aimTip.classList.remove('hidden'); }
                 else if (name === 'royale' && !this.isMobile) { this.aimTip.innerText = 'Kattints a fegyverhez!'; this.aimTip.classList.remove('hidden'); }
                 else this.aimTip.classList.add('hidden');
 
-                this.uiMenu.classList.add('hidden'); 
-                this.uiGameOver.classList.add('hidden');
-                this.uiHud.classList.remove('hidden'); 
+                this.uiMenu.classList.add('hidden'); this.uiGameOver.classList.add('hidden'); this.uiHud.classList.remove('hidden'); 
                 
-                // ITT A JAVÍTÁS: Mindent egyszerűsítettem, ha mobil, gombok be!
                 if(this.isMobile) {
-                    this.mobileUI.classList.remove('hidden');
+                    if(name === 'blockblast') {
+                        this.mobileUI.classList.add('hidden');
+                        this.mobileMenuBtn.classList.remove('hidden');
+                    } else if (name === 'roulette') {
+                        this.mobileUI.classList.remove('hidden');
+                        this.dpadContainer.classList.add('hidden');
+                        this.mobileMenuBtn.classList.remove('hidden');
+                    } else {
+                        this.mobileUI.classList.remove('hidden');
+                        this.dpadContainer.classList.remove('hidden');
+                        this.mobileMenuBtn.classList.remove('hidden');
+                    }
                     document.getElementById('hud-controls').classList.add('hidden');
-                    this.mobileMenuBtn.classList.remove('hidden');
                 } else {
                     document.getElementById('hud-controls').classList.remove('hidden');
                 }
 
                 if (name === 'royale' && !this.isMobile) { setTimeout(() => { if(document.pointerLockElement !== this.canvas) this.canvas.requestPointerLock(); }, 100); }
 
-                this.input.clearConsumes();
-                this.lastTime = performance.now();
+                this.input.clearConsumes(); this.lastTime = performance.now();
             }
 
             restartGame() {
-                if (this.activeGameName === 'soccer_online') {
-                    if (socket) socket.emit('nextRound', this.activeGame.roomCode);
-                } else {
-                    this.startGame(this.activeGameName);
-                }
+                if (this.activeGameName === 'soccer_online') { if (socket) socket.emit('nextRound', this.activeGame.roomCode); } 
+                else { this.startGame(this.activeGameName); }
             }
 
             loop(t) {
-                let dt = (t - this.lastTime) / 1000; 
-                this.lastTime = t; 
-                if(dt > 0.1) dt = 0.1;
+                let dt = (t - this.lastTime) / 1000; this.lastTime = t; if(dt > 0.1) dt = 0.1;
 
                 if(!this.activeGame) {
                     this.menuBg.update(dt); this.menuBg.draw();
@@ -779,33 +928,21 @@
                         if (this.activeGameName === 'royale' && document.pointerLockElement) { this.aimTip.classList.add('hidden'); } 
                         else if (this.activeGameName === 'royale' && !this.isMobile) { this.aimTip.classList.remove('hidden'); }
 
-                        this.activeGame.update(dt); 
-                        this.activeGame.draw();
+                        this.activeGame.update(dt); this.activeGame.draw();
                         document.getElementById('scoreVal').innerText = this.activeGame.getScore();
                         if(this.activeGame.level) document.getElementById('levelVal').innerText = this.activeGame.level;
 
                         if(!this.activeGame.isAlive) {
-                            if(this.activeGameName === 'slope' && this.activeGame.fallOffset < 800) {
-                                // Zuhanás animáció
-                            } else {
+                            if(this.activeGameName === 'slope' && this.activeGame.fallOffset < 800) { } else {
                                 if(document.pointerLockElement) document.exitPointerLock();
-                                this.uiGameOver.classList.remove('hidden');
-                                this.uiHud.classList.add('hidden'); 
-                                document.getElementById('hud-controls').classList.add('hidden');
-                                this.mobileUI.classList.add('hidden');
-                                this.mobileMenuBtn.classList.add('hidden');
+                                this.uiGameOver.classList.remove('hidden'); this.uiHud.classList.add('hidden'); document.getElementById('hud-controls').classList.add('hidden'); this.mobileUI.classList.add('hidden'); this.mobileMenuBtn.classList.add('hidden');
                                 document.getElementById('finalScoreVal').innerText = this.activeGame.getScore();
                                 
                                 if (this.activeGame.message) { document.getElementById('goTitle').innerText = this.activeGame.message; } 
                                 else { document.getElementById('goTitle').innerText = "Game Over"; }
 
-                                if (this.activeGameName === 'soccer_online') { 
-                                    document.getElementById('btnRestart').innerText = "Folytatás";
-                                    document.getElementById('btnRestart').classList.remove('hidden'); 
-                                } else { 
-                                    document.getElementById('btnRestart').innerText = "Újraindítás";
-                                    document.getElementById('btnRestart').classList.remove('hidden'); 
-                                }
+                                if (this.activeGameName === 'soccer_online') { document.getElementById('btnRestart').innerText = "Folytatás"; document.getElementById('btnRestart').classList.remove('hidden'); } 
+                                else { document.getElementById('btnRestart').innerText = "Újraindítás"; document.getElementById('btnRestart').classList.remove('hidden'); }
                             }
                         }
                     }
